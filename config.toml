@@ -1,0 +1,5 @@
+
+project_id = "xtmkphotwwivgyqmltrb"
+
+[functions.send-otp-email]
+verify_jwt = false
