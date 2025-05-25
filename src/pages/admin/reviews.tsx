@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { AdminLayout } from "@/components/admin/layout";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,6 @@ import {
   Search, 
   Check,
   X,
-  AlertTriangle,
-  MoreHorizontal,
   EyeIcon 
 } from "lucide-react";
 import { 
@@ -19,33 +17,140 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { mockReviews, mockBrands } from "@/data/mockData";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface ReviewWithBrand {
+  review_id: string;
+  rating: number;
+  review_text: string;
+  status: string;
+  created_at: string;
+  category: string;
+  brand_name: string;
+  brand_logo: string;
+  user_name: string;
+}
 
 export default function AdminReviewsPage() {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [reviews, setReviews] = useState<ReviewWithBrand[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Join reviews with brands
-  const reviews = mockReviews.map(review => {
-    const brand = mockBrands.find(b => b.brand_id === review.brand_id);
-    return {
-      ...review,
-      brand_name: brand?.brand_name || "Unknown Brand",
-      brand_logo: brand?.logo_url
-    };
-  });
+  // Fetch reviews from database
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+          review_id,
+          rating,
+          review_text,
+          status,
+          created_at,
+          category,
+          brands(brand_name, logo_url),
+          users(name)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        toast({
+          title: "Error fetching reviews",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Transform data
+      const transformedReviews: ReviewWithBrand[] = (data || []).map(review => ({
+        review_id: review.review_id,
+        rating: review.rating,
+        review_text: review.review_text,
+        status: review.status,
+        created_at: review.created_at,
+        category: review.category,
+        brand_name: (review.brands as any)?.brand_name || "Unknown Brand",
+        brand_logo: (review.brands as any)?.logo_url || "/placeholder.svg",
+        user_name: (review.users as any)?.name || "Anonymous"
+      }));
+      
+      setReviews(transformedReviews);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'admin') {
+      fetchReviews();
+    }
+  }, [isAuthenticated, user]);
   
   // Filter reviews
   const filteredReviews = reviews.filter(review => {
     const matchesSearch = 
       review.review_text.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      review.brand_name.toLowerCase().includes(searchQuery.toLowerCase());
+      review.brand_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      review.user_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || review.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
+
+  // Handle review status update
+  const updateReviewStatus = async (reviewId: string, newStatus: "approved" | "rejected") => {
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('review_id', reviewId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state
+      setReviews(reviews.map(review => 
+        review.review_id === reviewId 
+          ? { ...review, status: newStatus }
+          : review
+      ));
+      
+      toast({
+        title: "Review updated",
+        description: `Review has been ${newStatus}`,
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: "Error updating review",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
   
   // If not admin, don't render
   if (!isAuthenticated || user?.role !== 'admin') {
@@ -53,7 +158,7 @@ export default function AdminReviewsPage() {
   }
   
   return (
-    <AdminLayout title="Review Moderation" active="reviews">
+    <AdminLayout title="Review Management" active="reviews">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="relative w-full sm:w-64">
@@ -85,39 +190,55 @@ export default function AdminReviewsPage() {
       </div>
       
       {/* Reviews Table */}
-      <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="py-3 px-4 text-left">Brand</th>
-                <th className="py-3 px-4 text-left">Review</th>
-                <th className="py-3 px-4 text-left">Rating</th>
-                <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Date</th>
-                <th className="py-3 px-4 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReviews.map((review) => (
-                <tr key={review.review_id} className="border-b last:border-0">
-                  <td className="py-3 px-4">
+      <div className="bg-white border rounded-lg shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Brand</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Review</TableHead>
+              <TableHead>Rating</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-10">
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-500">Loading reviews...</div>
+                </TableCell>
+              </TableRow>
+            ) : filteredReviews.length > 0 ? (
+              filteredReviews.map((review) => (
+                <TableRow key={review.review_id}>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       <img
-                        src={review.brand_logo || "/placeholder.svg"}
+                        src={review.brand_logo}
                         alt={review.brand_name}
                         className="w-6 h-6 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
                       />
-                      <span>{review.brand_name}</span>
+                      <span className="text-sm">{review.brand_name}</span>
                     </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="max-w-xs truncate">
+                  </TableCell>
+                  <TableCell className="text-sm">{review.user_name}</TableCell>
+                  <TableCell>
+                    <div className="max-w-xs truncate text-sm">
                       {review.review_text}
                     </div>
-                  </td>
-                  <td className="py-3 px-4">{review.rating}/5</td>
-                  <td className="py-3 px-4">
+                  </TableCell>
+                  <TableCell className="text-sm">{review.rating}/5</TableCell>
+                  <TableCell className="text-sm capitalize">{review.category}</TableCell>
+                  <TableCell>
                     <div className={cn(
                       "px-2 py-1 text-xs rounded-full font-medium inline-block",
                       {
@@ -128,47 +249,47 @@ export default function AdminReviewsPage() {
                     )}>
                       {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
                     </div>
-                  </td>
-                  <td className="py-3 px-4">
+                  </TableCell>
+                  <TableCell className="text-sm">
                     {new Date(review.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4">
+                  </TableCell>
+                  <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" title="View">
-                        <EyeIcon className="h-4 w-4" />
-                      </Button>
-                      
                       {review.status === "pending" && (
                         <>
-                          <Button variant="ghost" size="icon" className="text-green-600" title="Approve">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-green-600 hover:text-green-700" 
+                            onClick={() => updateReviewStatus(review.review_id, "approved")}
+                            title="Approve"
+                          >
                             <Check className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-red-600" title="Reject">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700" 
+                            onClick={() => updateReviewStatus(review.review_id, "rejected")}
+                            title="Reject"
+                          >
                             <X className="h-4 w-4" />
                           </Button>
                         </>
                       )}
-                      
-                      {review.status !== "pending" && (
-                        <Button variant="ghost" size="icon" title="More">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-              
-              {filteredReviews.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-6 text-center text-gray-500">
-                    No reviews found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-6 text-gray-500">
+                  No reviews found matching your criteria.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </AdminLayout>
   );

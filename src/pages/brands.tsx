@@ -2,18 +2,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { BrandCard } from "@/components/brand-card";
-import { Brand, BrandCategory } from "@/types";
-import { brandCategories, mockBrands } from "@/data/mockData";
+import { Brand } from "@/types";
 import { SearchInput } from "@/components/ui/search-input";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 
 export default function BrandsListPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<BrandCategory | "all">("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
   // Fetch brands from Supabase
-  const { data: brands, isLoading } = useQuery({
+  const { data: brands = [], isLoading } = useQuery({
     queryKey: ['brands'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -23,22 +22,38 @@ export default function BrandsListPage() {
         
       if (error) {
         console.error('Error fetching brands:', error);
-        // Fallback to mock data if there's an error
-        return mockBrands;
+        return [];
       }
       
-      return data.length > 0 ? data : mockBrands;
+      return data || [];
+    },
+  });
+
+  // Fetch categories dynamically from the database
+  const { data: categories = [] } = useQuery({
+    queryKey: ['brand-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('brand_categories')
+        .select('*');
+        
+      if (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+      }
+      
+      return data || [];
     },
   });
   
   // Filter brands based on search query and category
-  const filteredBrands = brands?.filter((brand) => {
+  const filteredBrands = brands.filter((brand) => {
     const matchesSearch = brand.brand_name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || brand.category === selectedCategory;
     return matchesSearch && matchesCategory;
-  }) || [];
+  });
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -79,17 +94,18 @@ export default function BrandsListPage() {
             <span className="font-medium">All</span>
           </button>
           
-          {brandCategories.map((category) => (
+          {categories.map((cat) => (
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
+              key={cat.category}
+              onClick={() => setSelectedCategory(cat.category)}
               className={`p-4 rounded-lg text-center transition-colors ${
-                selectedCategory === category
+                selectedCategory === cat.category
                   ? "bg-brandblue-100 border-2 border-brandblue-500"
                   : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
               }`}
             >
-              <span className="font-medium">{category}</span>
+              <span className="font-medium capitalize">{cat.category}</span>
+              <div className="text-xs text-gray-500 mt-1">({cat.brand_count})</div>
             </button>
           ))}
         </div>

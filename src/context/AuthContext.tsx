@@ -18,17 +18,17 @@ import {
   logout as authLogout,
   resetPassword as authResetPassword,
   updatePassword as authUpdatePassword,
+  signInWithGoogle as authSignInWithGoogle,
 } from "@/lib/auth";
 
-// —————————————————————————————————
-// 3. Define the context interface
-// —————————————————————————————————
+// Define the context interface
 interface AuthContextType {
   user: UserProfile | null;
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  signInWithGoogle: () => Promise<boolean>;
   sendOTP: (email: string, forRegistration?: boolean) => Promise<boolean>;
   loginWithOTP: (email: string, otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -39,9 +39,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// —————————————————————————————————
-// 4. AuthProvider implementation
-// —————————————————————————————————
+// AuthProvider implementation
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -69,6 +67,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
                 setUser(profile);
               } else {
                 console.warn("User authenticated but profile not found");
+                // If no profile exists, create one
+                const { error } = await supabase
+                  .from("users")
+                  .insert({
+                    user_id: currentSession.user.id,
+                    name: currentSession.user.user_metadata?.name || currentSession.user.user_metadata?.full_name || currentSession.user.email?.split('@')[0] || 'User',
+                    email: currentSession.user.email || '',
+                    role: "consumer",
+                    is_verified: true,
+                  });
+                
+                if (!error) {
+                  // Fetch the newly created profile
+                  const newProfile = await fetchUserProfile(currentSession.user.id);
+                  if (newProfile) {
+                    setUser(newProfile);
+                  }
+                }
               }
               setIsLoading(false);
             } catch (error) {
@@ -118,53 +134,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, []);
 
-  // Wrap auth functions to handle loading state
+  // Wrap auth functions without additional loading state management
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    const result = await authLogin(email, password);
-    setIsLoading(false);
-    return result;
+    return await authLogin(email, password);
+  };
+
+  const signInWithGoogle = async (): Promise<boolean> => {
+    return await authSignInWithGoogle();
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    const result = await authRegister(name, email, password);
-    setIsLoading(false);
-    return result;
+    return await authRegister(name, email, password);
   };
 
   const sendOTP = async (email: string, forRegistration = false): Promise<boolean> => {
-    setIsLoading(true);
-    const result = await authSendOTP(email, forRegistration);
-    setIsLoading(false);
-    return result;
+    return await authSendOTP(email, forRegistration);
   };
 
   const loginWithOTP = async (email: string, otp: string): Promise<boolean> => {
-    setIsLoading(true);
-    const result = await authLoginWithOTP(email, otp);
-    setIsLoading(false);
-    return result;
+    return await authLoginWithOTP(email, otp);
   };
   
   const updatePassword = async (newPassword: string): Promise<boolean> => {
-    setIsLoading(true);
-    const result = await authUpdatePassword(newPassword);
-    setIsLoading(false);
-    return result;
+    return await authUpdatePassword(newPassword);
   };
 
   const resetPassword = async (email: string): Promise<boolean> => {
-    setIsLoading(true);
-    const result = await authResetPassword(email);
-    setIsLoading(false);
-    return result;
+    return await authResetPassword(email);
   };
 
   const logout = async (): Promise<void> => {
-    setIsLoading(true);
     await authLogout();
-    setIsLoading(false);
   };
 
   return (
@@ -175,6 +175,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         isAuthenticated: !!user && !!session,
         isLoading,
         login,
+        signInWithGoogle,
         register,
         sendOTP,
         loginWithOTP,

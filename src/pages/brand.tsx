@@ -6,10 +6,18 @@ import { Rating } from "@/components/ui/rating";
 import { ReviewCard } from "@/components/review-card";
 import { Button } from "@/components/ui/button";
 import { Review, ReviewCategory } from "@/types";
-import { Globe, Mail, Phone, MessageSquare, BadgeHelp, Instagram, Facebook, Twitter, Linkedin } from "lucide-react";
+import { Globe, Mail, Phone, MessageSquare, BadgeHelp, Instagram, Facebook, Twitter, Linkedin, Building, Users, Package } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
+
+interface BrandProduct {
+  product_id: string;
+  product_name: string;
+  product_image_url?: string;
+  product_url?: string;
+  display_order: number;
+}
 
 export default function BrandPage() {
   const { brandId } = useParams<{ brandId: string }>();
@@ -76,6 +84,28 @@ export default function BrandPage() {
     },
     enabled: !!brandId,
   });
+
+  // Fetch brand products
+  const { data: products = [] } = useQuery({
+    queryKey: ['brand-products', brandId],
+    queryFn: async () => {
+      if (!brandId) return [];
+      
+      const { data, error } = await supabase
+        .from('brand_products')
+        .select('*')
+        .eq('brand_id', brandId)
+        .order('display_order');
+      
+      if (error) {
+        console.error("Error fetching brand products:", error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!brandId,
+  });
   
   // Filter reviews by category
   const filteredReviews = selectedCategory === "all"
@@ -132,7 +162,7 @@ export default function BrandPage() {
             </div>
             
             <p className="text-sm text-muted-foreground mb-4">
-              Category: <span className="font-medium">{brand.category}</span> · 
+              Category: <span className="font-medium capitalize">{brand.category}</span> · 
               <span className="ml-2">{brand.total_reviews} reviews</span>
             </p>
             
@@ -147,6 +177,86 @@ export default function BrandPage() {
           </div>
         </div>
       </section>
+
+      {/* Company Details Section */}
+      {(brand.legal_entity_name || brand.holding_company_name || brand.company_notes) && (
+        <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Company Information
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {brand.legal_entity_name && (
+              <div>
+                <h3 className="font-medium text-gray-700 mb-2">Legal Entity Name</h3>
+                <p className="text-gray-900">{brand.legal_entity_name}</p>
+              </div>
+            )}
+            
+            {brand.holding_company_name && (
+              <div>
+                <h3 className="font-medium text-gray-700 mb-2">Holding Company</h3>
+                <p className="text-gray-900">{brand.holding_company_name}</p>
+              </div>
+            )}
+            
+            {brand.company_notes && (
+              <div className="md:col-span-2">
+                <h3 className="font-medium text-gray-700 mb-2">About the Company</h3>
+                <p className="text-gray-900">{brand.company_notes}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Top Products Section */}
+      {(brand.top_products || products.length > 0) && (
+        <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Top Products & Services
+          </h2>
+          
+          {brand.top_products && (
+            <div className="mb-6">
+              <p className="text-gray-700">{brand.top_products}</p>
+            </div>
+          )}
+          
+          {products.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {products.map((product: BrandProduct) => (
+                <div key={product.product_id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="aspect-square mb-3 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    {product.product_image_url ? (
+                      <img
+                        src={product.product_image_url}
+                        alt={product.product_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="h-8 w-8 text-gray-400" />
+                    )}
+                  </div>
+                  <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.product_name}</h3>
+                  {product.product_url && (
+                    <a
+                      href={product.product_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-brandblue-600 hover:underline"
+                    >
+                      View Product
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Customer Service Info Section */}
       <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">

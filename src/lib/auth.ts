@@ -41,7 +41,7 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
             .from("users")
             .insert({
               user_id: userId,
-              name: authUser.user.user_metadata.name || authUser.user.email?.split('@')[0] || 'User',
+              name: authUser.user.user_metadata.name || authUser.user.user_metadata.full_name || authUser.user.email?.split('@')[0] || 'User',
               email: authUser.user.email || '',
               role: "consumer",
               is_verified: true
@@ -67,6 +67,44 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
   } catch (err) {
     console.error("Unexpected error in fetchUserProfile:", err);
     return null;
+  }
+};
+
+// Google Sign-In
+export const signInWithGoogle = async (): Promise<boolean> => {
+  try {
+    console.log("Starting Google Sign-In");
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
+    });
+    
+    if (error) {
+      console.error("Google Sign-In error:", error);
+      toast({ 
+        title: "Google Sign-In failed", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+      return false;
+    }
+    
+    // The redirect will handle the rest
+    return true;
+  } catch (err) {
+    console.error("Unexpected error in Google Sign-In:", err);
+    toast({ 
+      title: "Google Sign-In error", 
+      description: "An unexpected error occurred", 
+      variant: "destructive" 
+    });
+    return false;
   }
 };
 
@@ -103,64 +141,57 @@ export const login = async (email: string, password: string): Promise<boolean> =
   }
 };
 
-// Register a new user
+// Register a new user using OTP-based authentication
 export const register = async (name: string, email: string, password: string): Promise<boolean> => {
   try {
-    // First verify that the OTP for this email exists and is valid
-    const { data: otpData, error: otpError } = await supabase
-      .from("otp_logs")
-      .select("*")
+    console.log("Starting registration for:", email);
+    
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("email")
       .eq("email", email)
-      .eq("is_verified", false)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-      
-    if (otpError || !otpData) {
+      .maybeSingle();
+
+    if (existingUser) {
       toast({ 
-        title: "Verification error", 
-        description: "Please ensure you've verified your email with the OTP", 
+        title: "Email already in use", 
+        description: "This email is already registered. Try logging in instead.", 
         variant: "destructive" 
       });
       return false;
     }
-    
-    // Check if OTP is expired (15 minutes)
-    const otpTimestamp = new Date(otpData.created_at);
-    const currentTime = new Date();
-    const diffMinutes = (currentTime.getTime() - otpTimestamp.getTime()) / (1000 * 60);
-    
-    if (diffMinutes > 15) {
-      toast({ 
-        title: "OTP expired", 
-        description: "The verification code has expired. Please request a new one", 
-        variant: "destructive" 
-      });
-      return false;
-    }
-    
-    // Mark OTP as verified
-    await supabase
-      .from("otp_logs")
-      .update({ is_verified: true })
-      .eq("otp_id", otpData.otp_id);
-    
-    // 1. Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+
+    // Use Supabase's built-in OTP signup
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          name: name
+        }
+      }
     });
     
-    if (authError) {
-      toast({ 
-        title: "Registration failed", 
-        description: authError.message, 
-        variant: "destructive" 
-      });
+    if (error) {
+      console.error("Registration error:", error);
+      if (error.message.includes('already registered')) {
+        toast({ 
+          title: "Email already in use", 
+          description: "This email is already registered. Try logging in instead.", 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: "Registration failed", 
+          description: error.message, 
+          variant: "destructive" 
+        });
+      }
       return false;
     }
     
-    if (!authData.user) {
+    if (!data.user) {
       toast({ 
         title: "Registration error", 
         description: "Unable to create user account", 
@@ -169,51 +200,30 @@ export const register = async (name: string, email: string, password: string): P
       return false;
     }
     
-    // 2. Create profile in users table
-    const { error: profileError } = await supabase
-      .from("users")
-      .insert({
-        user_id: authData.user.id,
-        name,
-        email,
-        role: "consumer",
-        is_verified: true, // Since we use OTP verification
-      });
-      
-    if (profileError) {
-      console.error("Error creating user profile:", profileError);
-      
-      // Try to clean up the auth user since profile creation failed
-      try {
-        await supabase.auth.admin.deleteUser(authData.user.id);
-      } catch (deleteErr) {
-        console.error("Error cleaning up auth user:", deleteErr);
-      }
-      
+    // If email confirmation is disabled, the user will be automatically signed in
+    // If email confirmation is enabled, user needs to check their email
+    if (data.user && !data.session) {
       toast({ 
-        title: "Profile creation failed", 
-        description: "Unable to complete registration", 
-        variant: "destructive" 
-      });
-      return false;
-    }
-    
-    // Success - Log the user in automatically
-    // We already have verified the OTP, created the user in auth and the profile in the users table
-    // Now let's sign them in automatically
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (signInError) {
-      // Registration was successful but auto-login failed
-      toast({ 
-        title: "Registration successful", 
-        description: "Please sign in with your new account", 
+        title: "Check your email", 
+        description: "Please check your email for a confirmation link to complete registration", 
         variant: "default" 
       });
     } else {
+      // User is automatically signed in, create profile
+      const { error: profileError } = await supabase
+        .from("users")
+        .insert({
+          user_id: data.user.id,
+          name,
+          email,
+          role: "consumer",
+          is_verified: true,
+        });
+        
+      if (profileError) {
+        console.error("Error creating user profile:", profileError);
+      }
+      
       toast({ 
         title: "Registration successful", 
         description: "Welcome to Brandthropic!", 
@@ -233,73 +243,39 @@ export const register = async (name: string, email: string, password: string): P
   }
 };
 
-// Send OTP code to user email
+// Send OTP code to user email using Supabase's built-in OTP
 export const sendOTP = async (email: string, forRegistration = false): Promise<boolean> => {
   try {
-    // For registration, check if the user already exists
-    if (forRegistration) {
-      const { data: existingUser } = await supabase
-        .from("users")
-        .select("email")
-        .eq("email", email)
-        .single();
-
-      if (existingUser) {
-        toast({ 
-          title: "Email already registered", 
-          description: "This email is already registered. Try logging in instead.", 
-          variant: "destructive" 
-        });
-        return false;
-      }
-    } 
-    // For login, check if the user exists
-    else {
-      const { error: userCheckError, data: userData } = await supabase
-        .from("users")
-        .select("email")
-        .eq("email", email)
-        .single();
-
-      if (userCheckError || !userData) {
-        toast({ 
-          title: "Account not found", 
-          description: "No account exists with this email", 
-          variant: "destructive" 
-        });
-        return false;
-      }
-    }
-
-    // Generate a random 4-digit OTP
-    const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+    console.log("Sending OTP for:", email, "Registration:", forRegistration);
     
-    // Store OTP in database for verification
-    await supabase.from("otp_logs").insert({
-      email,
-      otp_code: otpCode,
-      is_verified: false
-    });
-
-    // Invoke Supabase Edge Function to send email
-    const { error } = await supabase.functions.invoke('send-otp-email', {
-      body: { email, otp: otpCode }
-    });
-
-    if (error) {
-      toast({ 
-        title: "OTP delivery failed", 
-        description: error.message, 
-        variant: "destructive" 
+    if (forRegistration) {
+      // For registration, just return true as we'll handle it in the register function
+      return true;
+    } else {
+      // For login, send OTP
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false
+        }
       });
-      return false;
-    }
 
-    toast({ 
-      title: "OTP sent", 
-      description: "Check your email for the verification code" 
-    });
-    return true;
+      if (error) {
+        console.error("OTP send error:", error);
+        toast({ 
+          title: "OTP delivery failed", 
+          description: error.message, 
+          variant: "destructive" 
+        });
+        return false;
+      }
+
+      toast({ 
+        title: "OTP sent", 
+        description: "Check your email for the login code" 
+      });
+      return true;
+    }
   } catch (err) {
     console.error("Error sending OTP:", err);
     toast({ 
@@ -311,21 +287,19 @@ export const sendOTP = async (email: string, forRegistration = false): Promise<b
   }
 };
 
-// OTP login
+// OTP login using Supabase's built-in verification
 export const loginWithOTP = async (email: string, otp: string): Promise<boolean> => {
   try {
-    // 1. Verify OTP against database
-    const { data: otpData, error: otpError } = await supabase
-      .from("otp_logs")
-      .select("*")
-      .eq("email", email)
-      .eq("otp_code", otp)
-      .eq("is_verified", false)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    console.log("Verifying OTP for:", email);
+    
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: 'email'
+    });
 
-    if (otpError || !otpData) {
+    if (error) {
+      console.error("OTP verification error:", error);
       toast({ 
         title: "Invalid OTP", 
         description: "Please check the verification code and try again", 
@@ -334,62 +308,30 @@ export const loginWithOTP = async (email: string, otp: string): Promise<boolean>
       return false;
     }
     
-    // Check if OTP is expired (15 minutes)
-    const otpTimestamp = new Date(otpData.created_at);
-    const currentTime = new Date();
-    const diffMinutes = (currentTime.getTime() - otpTimestamp.getTime()) / (1000 * 60);
-    
-    if (diffMinutes > 15) {
-      toast({ 
-        title: "OTP expired", 
-        description: "This verification code has expired. Please request a new one", 
-        variant: "destructive" 
-      });
-      return false;
-    }
-    
-    // 2. Mark OTP as verified
-    await supabase
-      .from("otp_logs")
-      .update({ is_verified: true })
-      .eq("otp_id", otpData.otp_id);
-    
-    // 3. Sign in with magic link (this is technically what we're doing with OTP verification)
-    // First check if this user exists in auth
-    const { data: userData } = await supabase
-      .from("users")
-      .select("email")
-      .eq("email", email)
-      .single();
-      
-    if (userData) {
-      // User exists, sign in with password (we're assuming user has registered with email+password)
-      // For users who have registered, we'll use signInWithOtp as a passwordless login option
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email
-      });
-      
-      if (signInError) {
-        toast({ 
-          title: "Login failed", 
-          description: signInError.message, 
-          variant: "destructive" 
-        });
-        return false;
+    if (data.user) {
+      // Check if user profile exists, create if not
+      const profile = await fetchUserProfile(data.user.id);
+      if (!profile) {
+        const { error: profileError } = await supabase
+          .from("users")
+          .insert({
+            user_id: data.user.id,
+            name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User',
+            email: data.user.email || '',
+            role: "consumer",
+            is_verified: true,
+          });
+          
+        if (profileError) {
+          console.error("Error creating user profile:", profileError);
+        }
       }
-    } else {
-      // This shouldn't happen normally, but handle it anyway
-      toast({ 
-        title: "Account not found", 
-        description: "Please register first", 
-        variant: "destructive" 
-      });
-      return false;
+      
+      toast({ title: "Login successful", description: "Welcome back!" });
+      return true;
     }
     
-    // Success
-    toast({ title: "Verification successful", description: "You are now signed in" });
-    return true;
+    return false;
   } catch (err) {
     console.error("Error in OTP login:", err);
     toast({ 
@@ -465,8 +407,17 @@ export const resetPassword = async (email: string): Promise<boolean> => {
 // Sign out
 export const logout = async (): Promise<void> => {
   try {
-    await supabase.auth.signOut();
-    toast({ title: "Logged out", description: "See you soon!" });
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout error:", error);
+      toast({ 
+        title: "Logout error", 
+        description: "Failed to sign out", 
+        variant: "destructive" 
+      });
+    } else {
+      toast({ title: "Logged out", description: "See you soon!" });
+    }
   } catch (err) {
     console.error("Error in logout:", err);
     toast({ 

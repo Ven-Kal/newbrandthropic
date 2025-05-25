@@ -31,34 +31,8 @@ export const configureAuthRedirects = () => {
   const siteUrl = window.location.origin;
   
   // This is a client-side only configuration to ensure redirects work properly
-  // Especially important for development environments where the URL might change
+  // Especially important for production environments where the URL might change
   if (siteUrl) {
     console.log("Setting site URL for auth redirects:", siteUrl);
-    
-    // Create a storage bucket for review screenshots if it doesn't exist
-    const createStorageBucket = async () => {
-      try {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const reviewBucket = buckets?.find(b => b.name === 'review-screenshots');
-        
-        if (!reviewBucket) {
-          console.log("Creating review-screenshots bucket");
-          const { error } = await supabase.storage.createBucket('review-screenshots', {
-            public: true
-          });
-          
-          if (error) {
-            console.error("Error creating bucket:", error);
-          } else {
-            console.log("Successfully created review-screenshots bucket");
-          }
-        }
-      } catch (error) {
-        console.error("Error checking/creating storage bucket:", error);
-      }
-    };
-    
-    // Check and create storage bucket
-    createStorageBucket();
   }
 };

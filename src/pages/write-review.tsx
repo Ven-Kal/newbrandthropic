@@ -21,8 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Review, ReviewCategory } from "@/types";
-import { Input } from "@/components/ui/input";
+import { ReviewCategory } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -38,7 +37,6 @@ export default function WriteReviewPage() {
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [category, setCategory] = useState<ReviewCategory | "">("");
   const [reviewText, setReviewText] = useState("");
-  const [screenshot, setScreenshot] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   
@@ -85,13 +83,6 @@ export default function WriteReviewPage() {
     setRating(value);
   };
   
-  // Handle screenshot upload
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setScreenshot(e.target.files[0]);
-    }
-  };
-  
   // Submit review
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,62 +104,20 @@ export default function WriteReviewPage() {
       return;
     }
     
-    if (!reviewText.trim()) {
-      setError("Please write a review");
-      return;
-    }
-    
     // Submit the review
     setIsSubmitting(true);
     
     try {
-      let screenshotUrl: string | undefined = undefined;
-      
-      // If there's a screenshot, upload it to Supabase Storage
-      if (screenshot) {
-        // First check if storage bucket exists, if not create it
-        const { data: buckets } = await supabase.storage.listBuckets();
-        const reviewBucket = buckets?.find(b => b.name === 'review-screenshots');
-        
-        if (!reviewBucket) {
-          console.log("Creating review-screenshots bucket");
-          const { error: bucketError } = await supabase.storage.createBucket('review-screenshots', {
-            public: true
-          });
-          
-          if (bucketError) {
-            console.error("Error creating bucket:", bucketError);
-          }
-        }
-        
-        const fileName = `${user!.user_id}/${Date.now()}-${screenshot.name}`;
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from('review-screenshots')
-          .upload(fileName, screenshot);
-          
-        if (fileError) {
-          throw new Error(`Screenshot upload failed: ${fileError.message}`);
-        }
-        
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('review-screenshots')
-          .getPublicUrl(fileName);
-          
-        screenshotUrl = urlData.publicUrl;
-      }
-      
       console.log("Submitting review with brandId:", brandId);
       
-      // Insert review into the database
+      // Insert review into the database with approved status
       const { data, error } = await supabase.from('reviews').insert({
         user_id: user!.user_id,
         brand_id: brandId,
         rating,
         category: category as ReviewCategory,
-        review_text: reviewText,
-        screenshot_url: screenshotUrl,
-        status: "pending", // New reviews are pending by default
+        review_text: reviewText || `${rating} star rating`, // Default text if no review provided
+        status: "approved", // Direct approval - no admin moderation needed
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }).select();
@@ -179,8 +128,6 @@ export default function WriteReviewPage() {
       }
       
       // Update brand rating average and total reviews
-      // In a real app this would be handled by a database trigger or function
-      // For now, we'll update it manually
       if (brand) {
         const newTotalReviews = (brand.total_reviews || 0) + 1;
         const newAvgRating = ((brand.rating_avg || 0) * (newTotalReviews - 1) + rating) / newTotalReviews;
@@ -201,8 +148,8 @@ export default function WriteReviewPage() {
       
       // Show success toast
       toast({
-        title: "Review submitted",
-        description: "Your review has been submitted and is pending approval.",
+        title: "Review submitted successfully",
+        description: "Your review is now live and visible to everyone.",
       });
       
       // Navigate back to the brand page
@@ -268,9 +215,9 @@ export default function WriteReviewPage() {
     <div className="container mx-auto max-w-2xl px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Write a Review</CardTitle>
+          <CardTitle className="text-2xl">Rate & Review</CardTitle>
           <CardDescription>
-            Share your experience with {brand.brand_name}
+            Share your rating and experience with {brand.brand_name}
           </CardDescription>
         </CardHeader>
         
@@ -293,7 +240,7 @@ export default function WriteReviewPage() {
             
             {/* Rating */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Rating</label>
+              <label className="text-sm font-medium">Rating *</label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button
@@ -320,7 +267,7 @@ export default function WriteReviewPage() {
             
             {/* Category */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Category</label>
+              <label className="text-sm font-medium">Category *</label>
               <Select
                 value={category}
                 onValueChange={(value) => setCategory(value as ReviewCategory)}
@@ -341,31 +288,17 @@ export default function WriteReviewPage() {
             {/* Review Text */}
             <div className="space-y-2">
               <label htmlFor="reviewText" className="text-sm font-medium">
-                Your Review
+                Your Review (Optional)
               </label>
               <Textarea
                 id="reviewText"
-                placeholder="Write about your experience..."
-                rows={5}
+                placeholder="Write about your experience (optional)..."
+                rows={4}
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
               />
-            </div>
-            
-            {/* Screenshot Upload */}
-            <div className="space-y-2">
-              <label htmlFor="screenshot" className="text-sm font-medium">
-                Screenshot (optional)
-              </label>
-              <Input
-                id="screenshot"
-                type="file"
-                accept="image/*"
-                onChange={handleScreenshotChange}
-                className="cursor-pointer"
-              />
               <p className="text-xs text-muted-foreground">
-                You can upload a screenshot of your interaction with the brand
+                You can submit just a rating or add a detailed review
               </p>
             </div>
             
@@ -385,9 +318,9 @@ export default function WriteReviewPage() {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !rating || !category || !reviewText.trim()}
+              disabled={isSubmitting || !rating || !category}
             >
-              {isSubmitting ? "Submitting..." : "Submit Review"}
+              {isSubmitting ? "Submitting..." : "Submit Rating"}
             </Button>
           </CardFooter>
         </form>

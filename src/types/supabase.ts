@@ -54,6 +54,11 @@ export interface Database {
           linkedin_url?: string;
           facebook_url?: string;
           twitter_url?: string;
+          legal_entity_name?: string;
+          holding_company_name?: string;
+          top_products?: string;
+          company_notes?: string;
+          special_tags?: string;
           rating_avg: number;
           total_reviews: number;
           created_by?: string;
@@ -75,6 +80,11 @@ export interface Database {
           linkedin_url?: string;
           facebook_url?: string;
           twitter_url?: string;
+          legal_entity_name?: string;
+          holding_company_name?: string;
+          top_products?: string;
+          company_notes?: string;
+          special_tags?: string;
           rating_avg?: number;
           total_reviews?: number;
           created_by?: string;
@@ -96,6 +106,11 @@ export interface Database {
           linkedin_url?: string;
           facebook_url?: string;
           twitter_url?: string;
+          legal_entity_name?: string;
+          holding_company_name?: string;
+          top_products?: string;
+          company_notes?: string;
+          special_tags?: string;
           rating_avg?: number;
           total_reviews?: number;
           updated_at?: string;

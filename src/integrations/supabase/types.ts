@@ -47,23 +47,69 @@ export type Database = {
           },
         ]
       }
+      brand_products: {
+        Row: {
+          brand_id: string
+          created_at: string | null
+          display_order: number | null
+          product_id: string
+          product_image_url: string | null
+          product_name: string
+          product_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string | null
+          display_order?: number | null
+          product_id?: string
+          product_image_url?: string | null
+          product_name: string
+          product_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string | null
+          display_order?: number | null
+          product_id?: string
+          product_image_url?: string | null
+          product_name?: string
+          product_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["brand_id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           brand_id: string
           brand_name: string
           category: string
           chatbot_url: string | null
+          company_notes: string | null
           complaint_page_url: string | null
           created_at: string
           created_by: string | null
           facebook_url: string | null
           grievance_portal_url: string | null
+          holding_company_name: string | null
           instagram_url: string | null
+          legal_entity_name: string | null
           linkedin_url: string | null
           logo_url: string
           rating_avg: number
+          special_tags: string | null
           support_email: string | null
           toll_free_number: string | null
+          top_products: string | null
           total_reviews: number
           twitter_url: string | null
           updated_at: string
@@ -74,17 +120,22 @@ export type Database = {
           brand_name: string
           category: string
           chatbot_url?: string | null
+          company_notes?: string | null
           complaint_page_url?: string | null
           created_at?: string
           created_by?: string | null
           facebook_url?: string | null
           grievance_portal_url?: string | null
+          holding_company_name?: string | null
           instagram_url?: string | null
+          legal_entity_name?: string | null
           linkedin_url?: string | null
           logo_url: string
           rating_avg?: number
+          special_tags?: string | null
           support_email?: string | null
           toll_free_number?: string | null
+          top_products?: string | null
           total_reviews?: number
           twitter_url?: string | null
           updated_at?: string
@@ -95,17 +146,22 @@ export type Database = {
           brand_name?: string
           category?: string
           chatbot_url?: string | null
+          company_notes?: string | null
           complaint_page_url?: string | null
           created_at?: string
           created_by?: string | null
           facebook_url?: string | null
           grievance_portal_url?: string | null
+          holding_company_name?: string | null
           instagram_url?: string | null
+          legal_entity_name?: string | null
           linkedin_url?: string | null
           logo_url?: string
           rating_avg?: number
+          special_tags?: string | null
           support_email?: string | null
           toll_free_number?: string | null
+          top_products?: string | null
           total_reviews?: number
           twitter_url?: string | null
           updated_at?: string
@@ -231,7 +287,13 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      brand_categories: {
+        Row: {
+          brand_count: number | null
+          category: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

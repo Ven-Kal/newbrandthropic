@@ -13,19 +13,12 @@ export interface User {
 }
 
 // Brand types
-export type BrandCategory = 
-  | 'Telecom' 
-  | 'Broadband' 
-  | 'Appliances' 
-  | 'Utilities' 
-  | 'Govt IDs' 
-  | 'Automobiles' 
-  | 'Fuel';
+export type BrandCategory = string; // Made flexible to accept any category
 
 export interface Brand {
   brand_id: string;
   brand_name: string;
-  category: BrandCategory;
+  category: string; // Made flexible
   logo_url: string;
   toll_free_number?: string;
   support_email?: string;
@@ -37,6 +30,11 @@ export interface Brand {
   linkedin_url?: string;
   facebook_url?: string;
   twitter_url?: string;
+  legal_entity_name?: string;
+  holding_company_name?: string;
+  top_products?: string;
+  company_notes?: string;
+  special_tags?: string;
   rating_avg: number;
   total_reviews: number;
   created_by?: string;
