@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import HomePage from "./pages/home";
 import BrandPage from "./pages/brand";
 import LoginPage from "./pages/login";
@@ -17,6 +19,8 @@ import AdminDashboardPage from "./pages/admin/dashboard";
 import AdminBrandsPage from "./pages/admin/brands";
 import AdminReviewsPage from "./pages/admin/reviews";
 import BrandsListPage from "./pages/brands";
+import SubcategoryPage from "./pages/subcategory";
+import SurveyPage from "./pages/survey";
 import { useEffect } from "react";
 import { configureAuthRedirects } from "./lib/supabase";
 
@@ -69,6 +73,17 @@ const BrandReviewRedirect = () => {
   return <Navigate to={`/write-review/${brandId}`} replace />;
 };
 
+// Layout component for pages that need navbar and footer
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <>
+      <Navbar />
+      {children}
+      <Footer />
+    </>
+  );
+};
+
 const AppRoutes = () => {
   // Configure auth redirects when the app loads
   useEffect(() => {
@@ -77,48 +92,62 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/brands" element={<BrandsListPage />} />
-      <Route path="/brand/:brandId" element={<BrandPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Public Routes with Layout */}
+      <Route path="/" element={<Layout><HomePage /></Layout>} />
+      <Route path="/brands" element={<Layout><BrandsListPage /></Layout>} />
+      <Route path="/category/:category" element={<Layout><SubcategoryPage /></Layout>} />
+      <Route path="/brand/:brandId" element={<Layout><BrandPage /></Layout>} />
+      <Route path="/login" element={<Layout><LoginPage /></Layout>} />
+      <Route path="/register" element={<Layout><RegisterPage /></Layout>} />
+      <Route path="/reset-password" element={<Layout><ResetPasswordPage /></Layout>} />
       
-      {/* Protected Routes */}
+      {/* Survey Routes (No Layout - Full Screen) */}
+      <Route path="/survey/:surveyId" element={<SurveyPage />} />
+      
+      {/* Protected Routes with Layout */}
       <Route path="/write-review/:brandId" element={
-        <ProtectedRoute>
-          <WriteReviewPage />
-        </ProtectedRoute>
+        <Layout>
+          <ProtectedRoute>
+            <WriteReviewPage />
+          </ProtectedRoute>
+        </Layout>
       } />
       <Route path="/my-reviews" element={
-        <ProtectedRoute>
-          <MyReviewsPage />
-        </ProtectedRoute>
+        <Layout>
+          <ProtectedRoute>
+            <MyReviewsPage />
+          </ProtectedRoute>
+        </Layout>
       } />
       
       {/* Fixed route handling for reviews */}
       <Route path="/brand/:brandId/review" element={<BrandReviewRedirect />} />
       
-      {/* Admin Routes */}
+      {/* Admin Routes with Layout */}
       <Route path="/admin" element={
-        <AdminRoute>
-          <AdminDashboardPage />
-        </AdminRoute>
+        <Layout>
+          <AdminRoute>
+            <AdminDashboardPage />
+          </AdminRoute>
+        </Layout>
       } />
       <Route path="/admin/brands" element={
-        <AdminRoute>
-          <AdminBrandsPage />
-        </AdminRoute>
+        <Layout>
+          <AdminRoute>
+            <AdminBrandsPage />
+          </AdminRoute>
+        </Layout>
       } />
       <Route path="/admin/reviews" element={
-        <AdminRoute>
-          <AdminReviewsPage />
-        </AdminRoute>
+        <Layout>
+          <AdminRoute>
+            <AdminReviewsPage />
+          </AdminRoute>
+        </Layout>
       } />
       
       {/* Catch-all Route */}
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<Layout><NotFound /></Layout>} />
     </Routes>
   );
 };
@@ -131,7 +160,6 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Navbar />
             <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { AdminLayout } from "@/components/admin/layout";
+import { DuplicateDetector } from "@/components/admin/duplicate-detector";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -160,6 +161,11 @@ export default function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Duplicate Detection Section */}
+      <div className="mb-8">
+        <DuplicateDetector />
       </div>
       
       <Card className="mb-8">

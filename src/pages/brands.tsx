@@ -1,19 +1,20 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useRef } from "react";
 import { BrandCard } from "@/components/brand-card";
-import { Brand } from "@/types";
-import { SearchInput } from "@/components/ui/search-input";
+import { SmartSearch } from "@/components/ui/smart-search";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 export default function BrandsListPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  
+  const navigate = useNavigate();
+  const brandsRef = useRef<HTMLElement>(null);
+
   // Fetch brands from Supabase
   const { data: brands = [], isLoading } = useQuery({
-    queryKey: ['brands'],
+    queryKey: ['all-brands'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('brands')
@@ -45,7 +46,7 @@ export default function BrandsListPage() {
       return data || [];
     },
   });
-  
+
   // Filter brands based on search query and category
   const filteredBrands = brands.filter((brand) => {
     const matchesSearch = brand.brand_name
@@ -55,89 +56,147 @@ export default function BrandsListPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setTimeout(() => {
+      brandsRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
+  };
+
+  const handleSearchResultSelect = (result: any) => {
+    if (result.type === 'brand') {
+      navigate(`/brand/${result.id}`);
+    } else if (result.type === 'category') {
+      setSelectedCategory(result.name);
+      setTimeout(() => {
+        brandsRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  };
+
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-brandblue-800 text-white rounded-lg p-8 mb-10">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            All Brands
-          </h1>
-          <p className="text-lg mb-6 opacity-90">
-            Browse and review brands across different categories
-          </p>
-          
-          <div className="max-w-xl mx-auto">
-            <SearchInput
-              placeholder="Search for a brand..."
-              value={searchQuery}
-              onChange={setSearchQuery}
-              className="bg-white rounded-lg"
-            />
+      <section className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="mb-8">
+              <h1 className="text-4xl md:text-6xl font-bold mb-3">
+                All Brands
+              </h1>
+              <p className="text-xl md:text-2xl opacity-90 font-light italic">
+                Find any brand's customer service information
+              </p>
+            </div>
+            
+            <div className="max-w-2xl mx-auto">
+              <SmartSearch
+                placeholder="Search for brands, categories, or products..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onResultSelect={handleSearchResultSelect}
+                className="bg-white rounded-xl shadow-xl"
+              />
+            </div>
           </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Filter by Category</h2>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={`p-4 rounded-lg text-center transition-colors ${
-              selectedCategory === "all"
-                ? "bg-brandblue-100 border-2 border-brandblue-500"
-                : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
-            }`}
-          >
-            <span className="font-medium">All</span>
-          </button>
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">
+            Browse by Category
+          </h2>
           
-          {categories.map((cat) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 max-w-6xl mx-auto">
             <button
-              key={cat.category}
-              onClick={() => setSelectedCategory(cat.category)}
-              className={`p-4 rounded-lg text-center transition-colors ${
-                selectedCategory === cat.category
-                  ? "bg-brandblue-100 border-2 border-brandblue-500"
-                  : "bg-gray-50 hover:bg-gray-100 border border-gray-200"
+              onClick={() => handleCategorySelect("all")}
+              className={`group p-6 rounded-xl text-center transition-all duration-300 transform hover:scale-105 ${
+                selectedCategory === "all"
+                  ? "bg-primary text-white shadow-lg"
+                  : "bg-white hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
               }`}
             >
-              <span className="font-medium capitalize">{cat.category}</span>
-              <div className="text-xs text-gray-500 mt-1">({cat.brand_count})</div>
+              <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-secondary flex items-center justify-center">
+                <span className="text-white font-bold text-lg">All</span>
+              </div>
+              <span className="font-semibold">All Brands</span>
             </button>
-          ))}
+            
+            {categories.map((cat) => (
+              <button
+                key={cat.category}
+                onClick={() => handleCategorySelect(cat.category)}
+                className={`group p-6 rounded-xl text-center transition-all duration-300 transform hover:scale-105 ${
+                  selectedCategory === cat.category
+                    ? "bg-primary text-white shadow-lg"
+                    : "bg-white hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-accent flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">
+                    {cat.category.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="font-semibold capitalize">{cat.category}</span>
+                <div className={`text-xs mt-1 ${selectedCategory === cat.category ? 'text-white/80' : 'text-gray-500'}`}>
+                  ({cat.brand_count})
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Brands Listing */}
-      <section>
-        <h2 className="text-2xl font-bold mb-6">
-          {searchQuery
-            ? `Search Results for "${searchQuery}"`
-            : selectedCategory !== "all"
-            ? `${selectedCategory} Brands`
-            : "All Brands"}
-        </h2>
-        
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-500">Loading brands...</p>
-          </div>
-        ) : filteredBrands.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-500">
-              No brands found. Try adjusting your search or category filter.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredBrands.map((brand) => (
-              <BrandCard key={brand.brand_id} brand={brand} />
-            ))}
-          </div>
-        )}
+      {/* All Brands Section (filtered) */}
+      <section ref={brandsRef} className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">
+            {searchQuery
+              ? `Search Results for "${searchQuery}"`
+              : selectedCategory !== "all"
+              ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Brands`
+              : "All Brands"}
+          </h2>
+          
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="text-lg text-gray-500 mt-4">Loading brands...</p>
+            </div>
+          ) : filteredBrands.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <div className="w-24 h-24 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
+                  <span className="text-4xl">🔍</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No brands found</h3>
+                <p className="text-gray-500">
+                  Try adjusting your search or category filter.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+              {filteredBrands.map((brand, index) => (
+                <div 
+                  key={brand.brand_id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <BrandCard brand={brand} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

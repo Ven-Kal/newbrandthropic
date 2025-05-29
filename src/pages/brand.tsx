@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { mockBrands, mockReviews } from "@/data/mockData";
 import { Rating } from "@/components/ui/rating";
 import { ReviewCard } from "@/components/review-card";
+import { BrandCard } from "@/components/brand-card";
 import { Button } from "@/components/ui/button";
 import { Review, ReviewCategory } from "@/types";
 import { Globe, Mail, Phone, MessageSquare, BadgeHelp, Instagram, Facebook, Twitter, Linkedin, Building, Users, Package } from "lucide-react";
@@ -105,6 +105,29 @@ export default function BrandPage() {
       return data || [];
     },
     enabled: !!brandId,
+  });
+
+  // Fetch similar brands in the same category
+  const { data: similarBrands = [] } = useQuery({
+    queryKey: ['similar-brands', brand?.category, brandId],
+    queryFn: async () => {
+      if (!brand?.category || !brandId) return [];
+      
+      const { data, error } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('category', brand.category)
+        .neq('brand_id', brandId)
+        .limit(4);
+      
+      if (error) {
+        console.error("Error fetching similar brands:", error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    enabled: !!brand?.category && !!brandId,
   });
   
   // Filter reviews by category
@@ -381,6 +404,22 @@ export default function BrandPage() {
           </div>
         )}
       </section>
+
+      {/* Similar Brands Section */}
+      {similarBrands.length > 0 && (
+        <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Similar Brands in {brand.category}
+          </h2>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {similarBrands.map((similarBrand) => (
+              <BrandCard key={similarBrand.brand_id} brand={similarBrand} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Reviews Section */}
       <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
