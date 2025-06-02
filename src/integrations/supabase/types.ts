@@ -102,11 +102,16 @@ export type Database = {
           grievance_portal_url: string | null
           holding_company_name: string | null
           instagram_url: string | null
+          keywords: string[] | null
           legal_entity_name: string | null
           linkedin_url: string | null
           logo_url: string
+          meta_description: string | null
+          meta_title: string | null
           rating_avg: number
+          slug: string | null
           special_tags: string | null
+          subcategory: string | null
           support_email: string | null
           toll_free_number: string | null
           top_products: string | null
@@ -128,11 +133,16 @@ export type Database = {
           grievance_portal_url?: string | null
           holding_company_name?: string | null
           instagram_url?: string | null
+          keywords?: string[] | null
           legal_entity_name?: string | null
           linkedin_url?: string | null
           logo_url: string
+          meta_description?: string | null
+          meta_title?: string | null
           rating_avg?: number
+          slug?: string | null
           special_tags?: string | null
+          subcategory?: string | null
           support_email?: string | null
           toll_free_number?: string | null
           top_products?: string | null
@@ -154,11 +164,16 @@ export type Database = {
           grievance_portal_url?: string | null
           holding_company_name?: string | null
           instagram_url?: string | null
+          keywords?: string[] | null
           legal_entity_name?: string | null
           linkedin_url?: string | null
           logo_url?: string
+          meta_description?: string | null
+          meta_title?: string | null
           rating_avg?: number
+          slug?: string | null
           special_tags?: string | null
+          subcategory?: string | null
           support_email?: string | null
           toll_free_number?: string | null
           top_products?: string | null
@@ -255,6 +270,154 @@ export type Database = {
           },
         ]
       }
+      survey_questions: {
+        Row: {
+          created_at: string | null
+          is_required: boolean | null
+          options: Json
+          question_id: string
+          question_text: string
+          sort_order: number
+          survey_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          is_required?: boolean | null
+          options?: Json
+          question_id?: string
+          question_text: string
+          sort_order?: number
+          survey_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          is_required?: boolean | null
+          options?: Json
+          question_id?: string
+          question_text?: string
+          sort_order?: number
+          survey_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_questions_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["survey_id"]
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          created_at: string | null
+          question_id: string
+          response_id: string
+          selected_option_ids: string[]
+          session_id: string
+          survey_id: string
+          user_identifier: string
+        }
+        Insert: {
+          created_at?: string | null
+          question_id: string
+          response_id?: string
+          selected_option_ids?: string[]
+          session_id: string
+          survey_id: string
+          user_identifier: string
+        }
+        Update: {
+          created_at?: string | null
+          question_id?: string
+          response_id?: string
+          selected_option_ids?: string[]
+          session_id?: string
+          survey_id?: string
+          user_identifier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "survey_questions"
+            referencedColumns: ["question_id"]
+          },
+          {
+            foreignKeyName: "survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["survey_id"]
+          },
+        ]
+      }
+      survey_sessions: {
+        Row: {
+          completed_at: string | null
+          is_completed: boolean | null
+          session_id: string
+          started_at: string | null
+          survey_id: string
+          user_identifier: string
+        }
+        Insert: {
+          completed_at?: string | null
+          is_completed?: boolean | null
+          session_id?: string
+          started_at?: string | null
+          survey_id: string
+          user_identifier: string
+        }
+        Update: {
+          completed_at?: string | null
+          is_completed?: boolean | null
+          session_id?: string
+          started_at?: string | null
+          survey_id?: string
+          user_identifier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_sessions_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["survey_id"]
+          },
+        ]
+      }
+      surveys: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          is_active: boolean | null
+          survey_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          survey_id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          is_active?: boolean | null
+          survey_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -291,6 +454,14 @@ export type Database = {
         Row: {
           brand_count: number | null
           category: string | null
+        }
+        Relationships: []
+      }
+      brand_subcategories: {
+        Row: {
+          brand_count: number | null
+          category: string | null
+          subcategory: string | null
         }
         Relationships: []
       }

@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { AdminLayout } from "@/components/admin/layout";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Search, PencilLine, Download } from "lucide-react";
+import { Plus, Upload, Search, PencilLine, Download, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
@@ -19,6 +18,7 @@ import {
 import { LogoUploader } from "@/components/admin/logo-uploader";
 import { CSVImporter } from "@/components/admin/csv-importer";
 import { CSVTemplate } from "@/components/admin/csv-template";
+import { SEOGuide } from "@/components/admin/seo-guide";
 import { Brand } from "@/types";
 import {
   Table,
@@ -39,6 +39,7 @@ export default function AdminBrandsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [seoGuideOpen, setSeoGuideOpen] = useState(false);
   
   // Fetch brands from Supabase
   const fetchBrands = async () => {
@@ -139,6 +140,15 @@ export default function AdminBrandsPage() {
             size="sm" 
             variant="outline" 
             className="gap-2"
+            onClick={() => setSeoGuideOpen(true)}
+          >
+            <BookOpen className="h-4 w-4" />
+            SEO Guide
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="gap-2"
             onClick={() => setTemplateDialogOpen(true)}
           >
             <Download className="h-4 w-4" />
@@ -169,13 +179,14 @@ export default function AdminBrandsPage() {
               <TableHead>Category</TableHead>
               <TableHead>Rating</TableHead>
               <TableHead>Reviews</TableHead>
+              <TableHead>SEO Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10">
+                <TableCell colSpan={6} className="text-center py-10">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
                   </div>
@@ -183,41 +194,59 @@ export default function AdminBrandsPage() {
                 </TableCell>
               </TableRow>
             ) : filteredBrands.length > 0 ? (
-              filteredBrands.map((brand) => (
-                <TableRow key={brand.brand_id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={brand.logo_url || "/placeholder.svg"}
-                        alt={brand.brand_name}
-                        className="w-8 h-8 object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+              filteredBrands.map((brand) => {
+                const seoScore = [
+                  brand.meta_title,
+                  brand.meta_description,
+                  brand.alt_text,
+                  brand.canonical_url
+                ].filter(Boolean).length;
+                
+                return (
+                  <TableRow key={brand.brand_id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={brand.logo_url || "/placeholder.svg"}
+                          alt={brand.alt_text || `${brand.brand_name} logo`}
+                          className="w-8 h-8 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder.svg";
+                          }}
+                        />
+                        <span className="font-medium">{brand.brand_name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="capitalize">{brand.category}</TableCell>
+                    <TableCell>{brand.rating_avg.toFixed(1)}</TableCell>
+                    <TableCell>{brand.total_reviews}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          seoScore >= 3 ? 'bg-green-500' : 
+                          seoScore >= 2 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}></div>
+                        <span className="text-xs">{seoScore}/4</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedBrand(brand);
+                          setEditDialogOpen(true);
                         }}
-                      />
-                      <span className="font-medium">{brand.brand_name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="capitalize">{brand.category}</TableCell>
-                  <TableCell>{brand.rating_avg.toFixed(1)}</TableCell>
-                  <TableCell>{brand.total_reviews}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedBrand(brand);
-                        setEditDialogOpen(true);
-                      }}
-                    >
-                      <PencilLine className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+                      >
+                        <PencilLine className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
                   No brands found matching your search.
                 </TableCell>
               </TableRow>
@@ -225,6 +254,30 @@ export default function AdminBrandsPage() {
           </TableBody>
         </Table>
       </div>
+      
+      {/* SEO Guide Dialog */}
+      <Dialog open={seoGuideOpen} onOpenChange={setSeoGuideOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Complete SEO Implementation Guide</DialogTitle>
+            <DialogDescription>
+              Step-by-step guide to implement all SEO features and upload files to Google Search Console
+            </DialogDescription>
+          </DialogHeader>
+          
+          <SEOGuide />
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSeoGuideOpen(false)}
+            >
+              Close Guide
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Edit Logo Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

@@ -64,6 +64,19 @@ export interface Database {
           created_by?: string;
           created_at: string;
           updated_at: string;
+          // SEO fields
+          meta_title?: string;
+          meta_description?: string;
+          slug?: string;
+          keywords?: string[];
+          alt_text?: string;
+          og_image_url?: string;
+          canonical_url?: string;
+          // Enhanced contact information
+          support_hours?: Json;
+          additional_phone_numbers?: string[];
+          additional_emails?: string[];
+          head_office_address?: Json;
         };
         Insert: {
           brand_id?: string;
@@ -90,6 +103,19 @@ export interface Database {
           created_by?: string;
           created_at?: string;
           updated_at?: string;
+          // SEO fields
+          meta_title?: string;
+          meta_description?: string;
+          slug?: string;
+          keywords?: string[];
+          alt_text?: string;
+          og_image_url?: string;
+          canonical_url?: string;
+          // Enhanced contact information
+          support_hours?: Json;
+          additional_phone_numbers?: string[];
+          additional_emails?: string[];
+          head_office_address?: Json;
         };
         Update: {
           brand_id?: string;
@@ -114,6 +140,19 @@ export interface Database {
           rating_avg?: number;
           total_reviews?: number;
           updated_at?: string;
+          // SEO fields
+          meta_title?: string;
+          meta_description?: string;
+          slug?: string;
+          keywords?: string[];
+          alt_text?: string;
+          og_image_url?: string;
+          canonical_url?: string;
+          // Enhanced contact information
+          support_hours?: Json;
+          additional_phone_numbers?: string[];
+          additional_emails?: string[];
+          head_office_address?: Json;
         };
       };
       reviews: {

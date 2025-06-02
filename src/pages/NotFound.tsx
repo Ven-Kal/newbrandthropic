@@ -3,6 +3,8 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { EnhancedSEOHead } from "@/components/seo/enhanced-seo-head";
+import { PageHeader } from "@/components/seo/page-header";
 
 const NotFound = () => {
   const location = useLocation();
@@ -35,62 +37,73 @@ const NotFound = () => {
     path.includes("/brand/") ? path.split("/brand/")[1]?.split("/")[0] : null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
-        <h1 className="text-5xl font-bold mb-4 text-gray-800">404</h1>
-        <p className="text-xl text-gray-600 mb-6">Page not found</p>
-        
-        {isReviewRelated && (
-          <div className="mb-6 text-left bg-blue-50 p-4 rounded-md">
-            {!isAuthenticated ? (
-              <>
-                <p className="text-sm text-blue-800 mb-2">
-                  Looking to write a review? You need to be logged in first.
-                </p>
-                <div className="flex justify-center mt-2 space-x-4">
-                  <Button asChild size="sm">
-                    <Link to="/login">Sign In</Link>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/register">Register</Link>
-                  </Button>
-                </div>
-              </>
-            ) : brandId ? (
-              <>
-                <p className="text-sm text-blue-800 mb-2">
-                  Ready to write a review?
-                </p>
-                <div className="flex justify-center mt-2">
-                  <Button asChild size="sm">
-                    <Link to={`/write-review/${brandId}`}>Write Review</Link>
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-blue-800">
-                There was an issue with this review link. Please try accessing the brand page first.
-              </p>
-            )}
-          </div>
-        )}
-        
-        <div className="space-y-2">
-          <Button asChild className="w-full">
-            <Link to="/">Return to Home</Link>
-          </Button>
+    <>
+      <EnhancedSEOHead
+        title="Page Not Found - 404 | Brandthropic"
+        description="The page you're looking for doesn't exist. Find customer service information and reviews for thousands of brands on Brandthropic."
+        noIndex={true}
+      />
+      
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center bg-white p-8 rounded-lg shadow-md max-w-md">
+          <PageHeader 
+            title="404"
+            description="Page not found"
+            className="mb-6"
+          />
           
-          <Button 
-            type="button"
-            variant="outline" 
-            className="w-full"
-            onClick={() => window.history.back()}
-          >
-            Go Back
-          </Button>
+          {isReviewRelated && (
+            <div className="mb-6 text-left bg-blue-50 p-4 rounded-md">
+              {!isAuthenticated ? (
+                <>
+                  <p className="text-sm text-blue-800 mb-2">
+                    Looking to write a review? You need to be logged in first.
+                  </p>
+                  <div className="flex justify-center mt-2 space-x-4">
+                    <Button asChild size="sm">
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/register">Register</Link>
+                    </Button>
+                  </div>
+                </>
+              ) : brandId ? (
+                <>
+                  <p className="text-sm text-blue-800 mb-2">
+                    Ready to write a review?
+                  </p>
+                  <div className="flex justify-center mt-2">
+                    <Button asChild size="sm">
+                      <Link to={`/write-review/${brandId}`}>Write Review</Link>
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-blue-800">
+                  There was an issue with this review link. Please try accessing the brand page first.
+                </p>
+              )}
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Button asChild className="w-full">
+              <Link to="/">Return to Home</Link>
+            </Button>
+            
+            <Button 
+              type="button"
+              variant="outline" 
+              className="w-full"
+              onClick={() => window.history.back()}
+            >
+              Go Back
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

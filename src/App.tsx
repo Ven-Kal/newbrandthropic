@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { PerformanceMonitor } from "@/components/seo/performance-monitor";
 import HomePage from "./pages/home";
 import BrandPage from "./pages/brand";
 import LoginPage from "./pages/login";
@@ -77,6 +78,7 @@ const BrandReviewRedirect = () => {
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
+      <PerformanceMonitor />
       <Navbar />
       {children}
       <Footer />

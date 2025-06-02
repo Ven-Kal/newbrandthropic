@@ -40,6 +40,29 @@ export interface Brand {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  // SEO fields
+  meta_title?: string;
+  meta_description?: string;
+  slug?: string;
+  keywords?: string[];
+  alt_text?: string;
+  og_image_url?: string;
+  canonical_url?: string;
+  // Enhanced contact information
+  support_hours?: {
+    [key: string]: { open: string; close: string; timezone?: string } | 'closed';
+  };
+  additional_phone_numbers?: string[];
+  additional_emails?: string[];
+  head_office_address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+    lat?: number;
+    lng?: number;
+  };
 }
 
 // Review types
