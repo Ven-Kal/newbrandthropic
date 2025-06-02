@@ -4,6 +4,7 @@ import { Card, CardContent } from "./ui/card";
 import { Rating } from "./ui/rating";
 import { Link } from "react-router-dom";
 import { Zap, Award, Star, Verified } from "lucide-react";
+import { OptimizedImage } from "./ui/optimized-image";
 
 interface BrandCardProps {
   brand: Brand;
@@ -34,10 +35,12 @@ export function BrandCard({ brand, compact = false }: BrandCardProps) {
           )}
           
           <div className={`${compact ? 'h-20 p-4' : 'h-32 p-6'} flex items-center justify-center bg-white border-b`}>
-            <img 
+            <OptimizedImage 
               src={brand.logo_url} 
-              alt={brand.brand_name} 
-              className={`max-h-full max-w-full object-contain`} 
+              alt={brand.alt_text || `${brand.brand_name} logo - Customer service contact information and reviews`}
+              className="max-h-full max-w-full object-contain"
+              loading={compact ? "lazy" : "eager"}
+              priority={!compact}
             />
           </div>
           
