@@ -1,4 +1,3 @@
-
 User-agent: *
 Allow: /
 
@@ -14,15 +13,4 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-# Block access to admin areas
-Disallow: /admin/
-
-# Block access to user areas
-Disallow: /my-reviews
-Disallow: /write-review/
-
-# Allow sitemap
 Sitemap: https://brandthropic.com/sitemap.xml
-
-# Crawl delay for respectful crawling
-Crawl-delay: 1
