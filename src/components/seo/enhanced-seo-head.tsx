@@ -1,5 +1,6 @@
 
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { JsonLdSchema } from './json-ld-schema';
 import { Brand } from '@/types';
 
@@ -21,17 +22,19 @@ export function EnhancedSEOHead({
   description = "Find customer service contact information, reviews, and ratings for thousands of brands. Get help and share your experience on Brandthropic.",
   keywords = ["customer service", "brand reviews", "contact information", "customer support"],
   url = window.location.href,
-  image = "https://lovable.dev/opengraph-image-p98pqg.png",
+  image = "/meta/brandthropic-default.png",
   brand,
   breadcrumbs,
   reviews,
   noIndex = false,
   canonical
 }: EnhancedSEOHeadProps) {
+  const location = useLocation();
 
   useEffect(() => {
-    // Update title
-    document.title = title;
+    // Update title with category-specific keywords
+    const pageTitle = brand?.meta_title || title;
+    document.title = pageTitle;
 
     // Clear existing meta tags
     const existingMetas = document.querySelectorAll('meta[data-seo="true"]');
@@ -40,14 +43,29 @@ export function EnhancedSEOHead({
     // Update meta description
     const metaDescription = document.createElement('meta');
     metaDescription.setAttribute('name', 'description');
-    metaDescription.setAttribute('content', description);
+    metaDescription.setAttribute('content', brand?.meta_description || description);
     metaDescription.setAttribute('data-seo', 'true');
     document.head.appendChild(metaDescription);
 
-    // Update keywords
+    // Update keywords with category-specific terms
+    let seoKeywords = brand?.keywords || keywords;
+    if (brand?.category) {
+      const categoryKeywords = {
+        'airlines': ['flight support', 'cancellation', 'baggage claim', 'airline customer service'],
+        'telecom': ['internet support', 'billing complaints', 'network issues', 'telecom customer care'],
+        'ecommerce': ['returns', 'refunds', 'order support', 'online shopping help'],
+        'banking': ['account support', 'loan queries', 'banking customer service'],
+        'healthcare': ['patient care', 'medical support', 'hospital services'],
+        'hospitals': ['patient care', 'medical support', 'hospital services']
+      };
+      
+      const additionalKeywords = categoryKeywords[brand.category as keyof typeof categoryKeywords] || [];
+      seoKeywords = [...seoKeywords, ...additionalKeywords, brand.brand_name];
+    }
+
     const metaKeywords = document.createElement('meta');
     metaKeywords.setAttribute('name', 'keywords');
-    metaKeywords.setAttribute('content', keywords.join(', '));
+    metaKeywords.setAttribute('content', seoKeywords.join(', '));
     metaKeywords.setAttribute('data-seo', 'true');
     document.head.appendChild(metaKeywords);
 
@@ -58,17 +76,10 @@ export function EnhancedSEOHead({
     metaRobots.setAttribute('data-seo', 'true');
     document.head.appendChild(metaRobots);
 
-    // Viewport meta
-    const metaViewport = document.createElement('meta');
-    metaViewport.setAttribute('name', 'viewport');
-    metaViewport.setAttribute('content', 'width=device-width, initial-scale=1');
-    metaViewport.setAttribute('data-seo', 'true');
-    document.head.appendChild(metaViewport);
-
     // Open Graph tags
     const ogTags = [
-      { property: 'og:title', content: title },
-      { property: 'og:description', content: description },
+      { property: 'og:title', content: pageTitle },
+      { property: 'og:description', content: brand?.meta_description || description },
       { property: 'og:url', content: url },
       { property: 'og:image', content: brand?.og_image_url || image },
       { property: 'og:type', content: 'website' },
@@ -86,10 +97,10 @@ export function EnhancedSEOHead({
     // Twitter Card tags
     const twitterTags = [
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: title },
-      { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: brand?.og_image_url || image },
-      { name: 'twitter:site', content: '@brandthropic' }
+      { name: 'twitter:site', content: '@brandthropic' },
+      { name: 'twitter:title', content: pageTitle },
+      { name: 'twitter:description', content: brand?.meta_description || description },
+      { name: 'twitter:image', content: brand?.og_image_url || image }
     ];
 
     twitterTags.forEach(({ name, content }) => {
@@ -100,19 +111,28 @@ export function EnhancedSEOHead({
       document.head.appendChild(tag);
     });
 
-    // Canonical URL
+    // Dynamic canonical URL - generate based on current route and brand slug
     let canonicalLink = document.querySelector('link[rel="canonical"]');
     if (!canonicalLink) {
       canonicalLink = document.createElement('link');
       canonicalLink.setAttribute('rel', 'canonical');
       document.head.appendChild(canonicalLink);
     }
-    canonicalLink.setAttribute('href', canonical || brand?.canonical_url || url);
+    
+    let canonicalUrl = canonical || brand?.canonical_url || url;
+    
+    // For brand pages, use the slug to create proper canonical URL
+    if (brand?.slug && location.pathname.includes('/brand/')) {
+      canonicalUrl = `https://brandthropic.com/brand/${brand.slug}`;
+    }
+    
+    canonicalLink.setAttribute('href', canonicalUrl);
 
     // Performance hints
     const preconnectLinks = [
       'https://fonts.googleapis.com',
-      'https://fonts.gstatic.com'
+      'https://fonts.gstatic.com',
+      'https://www.googletagmanager.com'
     ];
 
     preconnectLinks.forEach(href => {
@@ -123,7 +143,7 @@ export function EnhancedSEOHead({
       document.head.appendChild(link);
     });
 
-  }, [title, description, keywords, url, image, brand, canonical, noIndex]);
+  }, [title, description, keywords, url, image, brand, canonical, noIndex, location.pathname]);
 
   return (
     <>

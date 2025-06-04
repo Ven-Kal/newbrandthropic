@@ -1,5 +1,6 @@
 
 import { Link } from 'react-router-dom';
+import { Instagram, Twitter, Linkedin, Facebook } from 'lucide-react';
 
 export const Footer = () => {
   return (
@@ -9,9 +10,49 @@ export const Footer = () => {
           {/* Brand */}
           <div className="col-span-1">
             <h3 className="text-xl font-bold mb-4">Brandthropic</h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-sm mb-4">
               Your voice matters. Share authentic brand experiences and discover what others are saying.
             </p>
+            
+            {/* Social Media Links */}
+            <div className="flex space-x-4">
+              <a 
+                href="https://instagram.com/brandthropic" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Follow us on Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://twitter.com/brandthropic" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Follow us on Twitter"
+              >
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://linkedin.com/company/brandthropic" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Follow us on LinkedIn"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://facebook.com/brandthropic" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Follow us on Facebook"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}
