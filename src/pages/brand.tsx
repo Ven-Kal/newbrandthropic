@@ -4,11 +4,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { ContactInfo } from "@/components/brand/contact-info";
+import { BrandReviews } from "@/components/brand/brand-reviews";
 import { EnhancedSEOHead } from "@/components/seo/enhanced-seo-head";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { SimilarBrands } from "@/components/similar-brands";
+import { Button } from "@/components/ui/button";
 import { Brand } from "@/types";
 import { toast } from "@/components/ui/use-toast";
+import { Star, Edit, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 export default function BrandPage() {
   const { slugOrId } = useParams<{ slugOrId: string }>();
@@ -104,7 +107,7 @@ export default function BrandPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-lg text-gray-600 mt-4">Loading brand information...</p>
+          <p className="text-gray-600 mt-4">Loading brand information...</p>
         </div>
       </div>
     );
@@ -114,7 +117,7 @@ export default function BrandPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Brand Not Found</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-4">Brand Not Found</h1>
           <p className="text-gray-600 mb-4">The brand you're looking for doesn't exist.</p>
           <button
             onClick={() => navigate('/brands')}
@@ -146,17 +149,113 @@ export default function BrandPage() {
         <div className="container mx-auto px-4 py-8">
           <Breadcrumbs items={breadcrumbs} />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              <ContactInfo brand={brand} />
+          {/* Brand Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mt-8 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-6">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <img
+                    src={brand.logo_url}
+                    alt={brand.logo_alt || `${brand.brand_name} logo`}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <h1 className="text-2xl font-semibold text-gray-900 mb-2">{brand.brand_name}</h1>
+                  <p className="text-gray-600 capitalize mb-3">{brand.category}</p>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(brand.rating_avg)
+                              ? "text-yellow-400 fill-current"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">{brand.rating_avg.toFixed(1)}</span>
+                    <span className="text-sm text-gray-600">({brand.total_reviews} reviews)</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Write Review Button */}
+              <Button 
+                onClick={() => navigate(`/write-review/${brand.brand_id}`)}
+                className="flex items-center space-x-2"
+              >
+                <Edit className="w-4 h-4" />
+                <span>Write Review</span>
+              </Button>
             </div>
-            
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <SimilarBrands currentBrand={brand} />
-            </div>
+
+            {/* Social Media Links */}
+            {(brand.facebook_url || brand.twitter_url || brand.instagram_url || brand.linkedin_url) && (
+              <div className="border-t pt-4">
+                <div className="flex items-center space-x-4">
+                  {brand.facebook_url && (
+                    <a 
+                      href={brand.facebook_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      <Facebook className="w-5 h-5" />
+                    </a>
+                  )}
+                  {brand.twitter_url && (
+                    <a 
+                      href={brand.twitter_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-500 transition-colors"
+                    >
+                      <Twitter className="w-5 h-5" />
+                    </a>
+                  )}
+                  {brand.instagram_url && (
+                    <a 
+                      href={brand.instagram_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-pink-600 hover:text-pink-700 transition-colors"
+                    >
+                      <Instagram className="w-5 h-5" />
+                    </a>
+                  )}
+                  {brand.linkedin_url && (
+                    <a 
+                      href={brand.linkedin_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-700 hover:text-blue-800 transition-colors"
+                    >
+                      <Linkedin className="w-5 h-5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+          
+          {/* Reviews Section */}
+          <div className="mb-8">
+            <BrandReviews brand={brand} />
+          </div>
+          
+          {/* Contact Information */}
+          <div className="mb-8">
+            <ContactInfo brand={brand} />
+          </div>
+          
+          {/* Similar Brands Section */}
+          <SimilarBrands currentBrand={brand} />
         </div>
       </main>
     </>
