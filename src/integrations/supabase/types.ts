@@ -90,29 +90,39 @@ export type Database = {
       }
       brands: {
         Row: {
+          additional_emails: string[] | null
+          additional_phone_numbers: string[] | null
           brand_id: string
           brand_name: string
+          canonical_url: string | null
           category: string
           chatbot_url: string | null
           company_notes: string | null
           complaint_page_url: string | null
           created_at: string
           created_by: string | null
+          escalation_contact_name: string | null
+          escalation_email: string | null
+          escalation_phone: string | null
           facebook_url: string | null
           grievance_portal_url: string | null
+          head_office_address: Json | null
           holding_company_name: string | null
           instagram_url: string | null
           keywords: string[] | null
           legal_entity_name: string | null
           linkedin_url: string | null
+          logo_alt: string | null
           logo_url: string
           meta_description: string | null
           meta_title: string | null
+          og_image_url: string | null
           rating_avg: number
           slug: string | null
           special_tags: string | null
           subcategory: string | null
           support_email: string | null
+          support_hours: Json | null
           toll_free_number: string | null
           top_products: string | null
           total_reviews: number
@@ -121,29 +131,39 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          additional_emails?: string[] | null
+          additional_phone_numbers?: string[] | null
           brand_id?: string
           brand_name: string
+          canonical_url?: string | null
           category: string
           chatbot_url?: string | null
           company_notes?: string | null
           complaint_page_url?: string | null
           created_at?: string
           created_by?: string | null
+          escalation_contact_name?: string | null
+          escalation_email?: string | null
+          escalation_phone?: string | null
           facebook_url?: string | null
           grievance_portal_url?: string | null
+          head_office_address?: Json | null
           holding_company_name?: string | null
           instagram_url?: string | null
           keywords?: string[] | null
           legal_entity_name?: string | null
           linkedin_url?: string | null
+          logo_alt?: string | null
           logo_url: string
           meta_description?: string | null
           meta_title?: string | null
+          og_image_url?: string | null
           rating_avg?: number
           slug?: string | null
           special_tags?: string | null
           subcategory?: string | null
           support_email?: string | null
+          support_hours?: Json | null
           toll_free_number?: string | null
           top_products?: string | null
           total_reviews?: number
@@ -152,29 +172,39 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          additional_emails?: string[] | null
+          additional_phone_numbers?: string[] | null
           brand_id?: string
           brand_name?: string
+          canonical_url?: string | null
           category?: string
           chatbot_url?: string | null
           company_notes?: string | null
           complaint_page_url?: string | null
           created_at?: string
           created_by?: string | null
+          escalation_contact_name?: string | null
+          escalation_email?: string | null
+          escalation_phone?: string | null
           facebook_url?: string | null
           grievance_portal_url?: string | null
+          head_office_address?: Json | null
           holding_company_name?: string | null
           instagram_url?: string | null
           keywords?: string[] | null
           legal_entity_name?: string | null
           linkedin_url?: string | null
+          logo_alt?: string | null
           logo_url?: string
           meta_description?: string | null
           meta_title?: string | null
+          og_image_url?: string | null
           rating_avg?: number
           slug?: string | null
           special_tags?: string | null
           subcategory?: string | null
           support_email?: string | null
+          support_hours?: Json | null
           toll_free_number?: string | null
           top_products?: string | null
           total_reviews?: number

@@ -1,490 +1,164 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { mockBrands, mockReviews } from "@/data/mockData";
-import { Rating } from "@/components/ui/rating";
-import { ReviewCard } from "@/components/review-card";
-import { BrandCard } from "@/components/brand-card";
-import { Button } from "@/components/ui/button";
-import { Review, ReviewCategory } from "@/types";
-import { Globe, Mail, Phone, MessageSquare, BadgeHelp, Instagram, Facebook, Twitter, Linkedin, Building, Users, Package } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { useQuery } from "@tanstack/react-query";
 
-interface BrandProduct {
-  product_id: string;
-  product_name: string;
-  product_image_url?: string;
-  product_url?: string;
-  display_order: number;
-}
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { ContactInfo } from "@/components/brand/contact-info";
+import { EnhancedSEOHead } from "@/components/seo/enhanced-seo-head";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
+import { SimilarBrands } from "@/components/similar-brands";
+import { Brand } from "@/types";
+import { toast } from "@/components/ui/use-toast";
 
 export default function BrandPage() {
-  const { brandId } = useParams<{ brandId: string }>();
-  const { isAuthenticated } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState<ReviewCategory | "all">("all");
-  
-  // Fetch brand data
-  const { data: brand, isLoading: isBrandLoading } = useQuery({
-    queryKey: ['brand', brandId],
+  const { slugOrId } = useParams<{ slugOrId: string }>();
+  const navigate = useNavigate();
+  const [brand, setBrand] = useState<Brand | null>(null);
+
+  // Fetch brand data - try by slug first, then by ID
+  const { data: brandData, isLoading, error } = useQuery({
+    queryKey: ['brand', slugOrId],
     queryFn: async () => {
-      if (!brandId) return null;
+      if (!slugOrId) return null;
       
-      console.log("Fetching brand with ID:", brandId);
+      console.log("Fetching brand with slug/ID:", slugOrId);
       
-      // Try to get brand from Supabase
-      const { data, error } = await supabase
+      // First try to fetch by slug (case-insensitive)
+      let { data, error } = await supabase
         .from('brands')
-        .select('*')
-        .eq('brand_id', brandId)
-        .single();
+        .select(`
+          *,
+          meta_title,
+          meta_description,
+          slug,
+          keywords,
+          logo_alt,
+          og_image_url,
+          canonical_url,
+          additional_phone_numbers,
+          additional_emails,
+          support_hours,
+          escalation_phone,
+          escalation_email,
+          escalation_contact_name,
+          head_office_address
+        `)
+        .ilike('slug', slugOrId)
+        .maybeSingle();
       
-      if (error) {
-        console.error("Error fetching brand:", error);
-        // Fallback to mock data for development
-        const mockBrand = mockBrands.find((b) => b.brand_id === brandId);
-        console.log("Fallback to mock brand:", mockBrand);
-        return mockBrand;
+      // If not found by slug, try by brand_id
+      if (!data && !error) {
+        console.log("Not found by slug, trying by ID");
+        const result = await supabase
+          .from('brands')
+          .select(`
+            *,
+            meta_title,
+            meta_description,
+            slug,
+            keywords,
+            logo_alt,
+            og_image_url,
+            canonical_url,
+            additional_phone_numbers,
+            additional_emails,
+            support_hours,
+            escalation_phone,
+            escalation_email,
+            escalation_contact_name,
+            head_office_address
+          `)
+          .eq('brand_id', slugOrId)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
       }
       
-      console.log("Brand data from Supabase:", data);
+      if (error) {
+        console.error('Error fetching brand:', error);
+        throw error;
+      }
+      
+      console.log("Brand data found:", data);
       return data;
     },
-    enabled: !!brandId,
-  });
-  
-  // Fetch reviews for this brand
-  const { data: reviews = [], isLoading: isReviewsLoading } = useQuery({
-    queryKey: ['brand-reviews', brandId],
-    queryFn: async () => {
-      if (!brandId) return [];
-      
-      console.log("Fetching reviews for brand ID:", brandId);
-      
-      // Try to get reviews from Supabase
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('brand_id', brandId)
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching reviews:", error);
-        // Fallback to mock data for development
-        const mockBrandReviews = mockReviews.filter(
-          (review) => review.brand_id === brandId && review.status === "approved"
-        );
-        console.log("Fallback to mock reviews:", mockBrandReviews);
-        return mockBrandReviews;
-      }
-      
-      console.log("Reviews data from Supabase:", data);
-      return data;
-    },
-    enabled: !!brandId,
+    enabled: !!slugOrId,
   });
 
-  // Fetch brand products
-  const { data: products = [] } = useQuery({
-    queryKey: ['brand-products', brandId],
-    queryFn: async () => {
-      if (!brandId) return [];
-      
-      const { data, error } = await supabase
-        .from('brand_products')
-        .select('*')
-        .eq('brand_id', brandId)
-        .order('display_order');
-      
-      if (error) {
-        console.error("Error fetching brand products:", error);
-        return [];
-      }
-      
-      return data || [];
-    },
-    enabled: !!brandId,
-  });
+  useEffect(() => {
+    if (brandData) {
+      setBrand(brandData);
+    } else if (!isLoading && !brandData && slugOrId) {
+      toast({
+        title: "Brand not found",
+        description: "The brand you're looking for doesn't exist.",
+        variant: "destructive"
+      });
+      navigate('/brands');
+    }
+  }, [brandData, isLoading, slugOrId, navigate]);
 
-  // Fetch similar brands in the same category
-  const { data: similarBrands = [] } = useQuery({
-    queryKey: ['similar-brands', brand?.category, brandId],
-    queryFn: async () => {
-      if (!brand?.category || !brandId) return [];
-      
-      const { data, error } = await supabase
-        .from('brands')
-        .select('*')
-        .eq('category', brand.category)
-        .neq('brand_id', brandId)
-        .limit(4);
-      
-      if (error) {
-        console.error("Error fetching similar brands:", error);
-        return [];
-      }
-      
-      return data || [];
-    },
-    enabled: !!brand?.category && !!brandId,
-  });
-  
-  // Filter reviews by category
-  const filteredReviews = selectedCategory === "all"
-    ? reviews
-    : reviews.filter((review) => review.category === selectedCategory);
-    
-  // Get unique review categories for this brand
-  const reviewCategories = Array.from(
-    new Set(reviews.map((review) => review.category))
-  );
-  
-  // If brand is loading
-  if (isBrandLoading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-lg text-gray-600 mt-4">Loading brand information...</p>
+        </div>
       </div>
     );
   }
-  
-  // If brand not found
+
   if (!brand) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Brand not found</h1>
-        <p className="mb-6">The brand you're looking for doesn't exist or has been removed.</p>
-        <Button asChild>
-          <Link to="/">Return to Home</Link>
-        </Button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Brand Not Found</h1>
+          <p className="text-gray-600 mb-4">The brand you're looking for doesn't exist.</p>
+          <button
+            onClick={() => navigate('/brands')}
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90"
+          >
+            Browse All Brands
+          </button>
+        </div>
       </div>
     );
   }
 
+  const breadcrumbs = [
+    { name: "Brands", url: "/brands" },
+    { name: brand.brand_name, url: `/brand/${brand.slug || brand.brand_id}` }
+  ];
+
   return (
-    <main className="container mx-auto px-4 py-8">
-      {/* Brand Header */}
-      <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-        <div className="grid md:grid-cols-[200px_1fr] gap-6">
-          <div className="flex items-center justify-center">
-            <img
-              src={brand.logo_url}
-              alt={brand.brand_name}
-              className="max-w-full max-h-[150px] object-contain"
-            />
-          </div>
+    <>
+      <EnhancedSEOHead 
+        title={brand.meta_title || `${brand.brand_name} - Customer Service Contact Information`}
+        description={brand.meta_description || `Find customer service contact information for ${brand.brand_name}. Get support numbers, complaint procedures, and escalation details.`}
+        keywords={brand.keywords || ['customer service', brand.brand_name, brand.category]}
+        brand={brand}
+        breadcrumbs={breadcrumbs}
+      />
+      
+      <main className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <Breadcrumbs items={breadcrumbs} />
           
-          <div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <h1 className="text-3xl font-bold">{brand.brand_name}</h1>
-              <div className="flex items-center gap-2">
-                <Rating value={brand.rating_avg} size="lg" />
-                <span className="text-sm font-medium">({brand.rating_avg.toFixed(1)})</span>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              <ContactInfo brand={brand} />
             </div>
             
-            <p className="text-sm text-muted-foreground mb-4">
-              Category: <span className="font-medium capitalize">{brand.category}</span> · 
-              <span className="ml-2">{brand.total_reviews} reviews</span>
-            </p>
-            
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="default" size="sm" className="gap-2">
-                <Link to={`/write-review/${brandId}`}>
-                  <MessageSquare className="h-4 w-4" />
-                  Write a Review
-                </Link>
-              </Button>
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <SimilarBrands currentBrand={brand} />
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Company Details Section */}
-      {(brand.legal_entity_name || brand.holding_company_name || brand.company_notes) && (
-        <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            Company Information
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            {brand.legal_entity_name && (
-              <div>
-                <h3 className="font-medium text-gray-700 mb-2">Legal Entity Name</h3>
-                <p className="text-gray-900">{brand.legal_entity_name}</p>
-              </div>
-            )}
-            
-            {brand.holding_company_name && (
-              <div>
-                <h3 className="font-medium text-gray-700 mb-2">Holding Company</h3>
-                <p className="text-gray-900">{brand.holding_company_name}</p>
-              </div>
-            )}
-            
-            {brand.company_notes && (
-              <div className="md:col-span-2">
-                <h3 className="font-medium text-gray-700 mb-2">About the Company</h3>
-                <p className="text-gray-900">{brand.company_notes}</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Top Products Section */}
-      {(brand.top_products || products.length > 0) && (
-        <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Top Products & Services
-          </h2>
-          
-          {brand.top_products && (
-            <div className="mb-6">
-              <p className="text-gray-700">{brand.top_products}</p>
-            </div>
-          )}
-          
-          {products.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {products.map((product: BrandProduct) => (
-                <div key={product.product_id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="aspect-square mb-3 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    {product.product_image_url ? (
-                      <img
-                        src={product.product_image_url}
-                        alt={product.product_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Package className="h-8 w-8 text-gray-400" />
-                    )}
-                  </div>
-                  <h3 className="font-medium text-sm mb-2 line-clamp-2">{product.product_name}</h3>
-                  {product.product_url && (
-                    <a
-                      href={product.product_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-brandblue-600 hover:underline"
-                    >
-                      View Product
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Customer Service Info Section */}
-      <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4">Customer Service Information</h2>
-        
-        <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
-          {brand.toll_free_number && (
-            <div className="flex items-center gap-3">
-              <div className="bg-brandblue-100 p-2 rounded-full">
-                <Phone className="h-5 w-5 text-brandblue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Toll-Free Number</p>
-                <p className="font-medium">{brand.toll_free_number}</p>
-              </div>
-            </div>
-          )}
-          
-          {brand.support_email && (
-            <div className="flex items-center gap-3">
-              <div className="bg-brandblue-100 p-2 rounded-full">
-                <Mail className="h-5 w-5 text-brandblue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email Support</p>
-                <p className="font-medium">{brand.support_email}</p>
-              </div>
-            </div>
-          )}
-          
-          {brand.website_url && (
-            <div className="flex items-center gap-3">
-              <div className="bg-brandblue-100 p-2 rounded-full">
-                <Globe className="h-5 w-5 text-brandblue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Official Website</p>
-                <a 
-                  href={brand.website_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="font-medium text-brandblue-600 hover:underline"
-                >
-                  {brand.website_url.replace(/^https?:\/\//, '')}
-                </a>
-              </div>
-            </div>
-          )}
-          
-          {brand.complaint_page_url && (
-            <div className="flex items-center gap-3">
-              <div className="bg-brandblue-100 p-2 rounded-full">
-                <BadgeHelp className="h-5 w-5 text-brandblue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Complaint Portal</p>
-                <a 
-                  href={brand.complaint_page_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="font-medium text-brandblue-600 hover:underline"
-                >
-                  {brand.complaint_page_url.replace(/^https?:\/\//, '')}
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Social Media Links */}
-        {(brand.facebook_url || brand.twitter_url || brand.instagram_url || brand.linkedin_url) && (
-          <div className="mt-6 pt-6 border-t">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">
-              Social Media Support
-            </h3>
-            
-            <div className="flex flex-wrap gap-3">
-              {brand.facebook_url && (
-                <a 
-                  href={brand.facebook_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-              )}
-              
-              {brand.twitter_url && (
-                <a 
-                  href={brand.twitter_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-                >
-                  <Twitter className="h-5 w-5" />
-                </a>
-              )}
-              
-              {brand.instagram_url && (
-                <a 
-                  href={brand.instagram_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-              )}
-              
-              {brand.linkedin_url && (
-                <a 
-                  href={brand.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-                >
-                  <Linkedin className="h-5 w-5" />
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Similar Brands Section */}
-      {similarBrands.length > 0 && (
-        <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Similar Brands in {brand.category}
-          </h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {similarBrands.map((similarBrand) => (
-              <BrandCard key={similarBrand.brand_id} brand={similarBrand} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Reviews Section */}
-      <section className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-xl font-bold">Reviews</h2>
-          
-          <Button asChild variant="default" size="sm" className="gap-2">
-            <Link to={`/write-review/${brandId}`}>
-              <MessageSquare className="h-4 w-4" />
-              Write a Review
-            </Link>
-          </Button>
-        </div>
-        
-        {/* Category Filter */}
-        {reviewCategories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <Button 
-              variant={selectedCategory === "all" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setSelectedCategory("all")}
-            >
-              All Reviews
-            </Button>
-            
-            {reviewCategories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </Button>
-            ))}
-          </div>
-        )}
-        
-        {/* Reviews List */}
-        {isReviewsLoading ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">Loading reviews...</p>
-          </div>
-        ) : filteredReviews.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">
-              {reviews.length === 0
-                ? "No reviews yet. Be the first to write one!"
-                : "No reviews found for this category."}
-            </p>
-            
-            {reviews.length === 0 && (
-              <Button asChild variant="outline" className="mt-4">
-                <Link to={`/write-review/${brandId}`}>Write a Review</Link>
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {filteredReviews.map((review) => (
-              <ReviewCard key={review.review_id} review={review} />
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+      </main>
+    </>
   );
 }

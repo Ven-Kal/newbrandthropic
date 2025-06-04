@@ -19,7 +19,9 @@ export interface Brand {
   brand_id: string;
   brand_name: string;
   category: string; // Made flexible
+  subcategory?: string; // Added subcategory field
   logo_url: string;
+  logo_alt?: string; // Added logo_alt field
   toll_free_number?: string;
   support_email?: string;
   website_url?: string;
@@ -49,11 +51,14 @@ export interface Brand {
   og_image_url?: string;
   canonical_url?: string;
   // Enhanced contact information
+  additional_phone_numbers?: string[];
+  additional_emails?: string[];
   support_hours?: {
     [key: string]: { open: string; close: string; timezone?: string } | 'closed';
   };
-  additional_phone_numbers?: string[];
-  additional_emails?: string[];
+  escalation_phone?: string;
+  escalation_email?: string;
+  escalation_contact_name?: string;
   head_office_address?: {
     street?: string;
     city?: string;

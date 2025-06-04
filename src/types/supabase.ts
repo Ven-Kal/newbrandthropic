@@ -73,9 +73,12 @@ export interface Database {
           og_image_url?: string;
           canonical_url?: string;
           // Enhanced contact information
-          support_hours?: Json;
           additional_phone_numbers?: string[];
           additional_emails?: string[];
+          support_hours?: Json;
+          escalation_phone?: string;
+          escalation_email?: string;
+          escalation_contact_name?: string;
           head_office_address?: Json;
         };
         Insert: {
@@ -112,9 +115,12 @@ export interface Database {
           og_image_url?: string;
           canonical_url?: string;
           // Enhanced contact information
-          support_hours?: Json;
           additional_phone_numbers?: string[];
           additional_emails?: string[];
+          support_hours?: Json;
+          escalation_phone?: string;
+          escalation_email?: string;
+          escalation_contact_name?: string;
           head_office_address?: Json;
         };
         Update: {
@@ -149,9 +155,12 @@ export interface Database {
           og_image_url?: string;
           canonical_url?: string;
           // Enhanced contact information
-          support_hours?: Json;
           additional_phone_numbers?: string[];
           additional_emails?: string[];
+          support_hours?: Json;
+          escalation_phone?: string;
+          escalation_email?: string;
+          escalation_contact_name?: string;
           head_office_address?: Json;
         };
       };

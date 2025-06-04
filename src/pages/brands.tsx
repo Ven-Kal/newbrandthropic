@@ -16,13 +16,30 @@ export default function BrandsListPage() {
   const navigate = useNavigate();
   const brandsRef = useRef<HTMLElement>(null);
 
-  // Fetch brands from Supabase with SEO data
+  // Fetch brands from Supabase with all required data
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ['all-brands'],
     queryFn: async () => {
+      console.log("Fetching all brands...");
       const { data, error } = await supabase
         .from('brands')
-        .select('*, meta_title, meta_description, slug, keywords, alt_text, og_image_url, canonical_url')
+        .select(`
+          *,
+          meta_title,
+          meta_description,
+          slug,
+          keywords,
+          logo_alt,
+          og_image_url,
+          canonical_url,
+          additional_phone_numbers,
+          additional_emails,
+          support_hours,
+          escalation_phone,
+          escalation_email,
+          escalation_contact_name,
+          head_office_address
+        `)
         .order('brand_name');
         
       if (error) {
@@ -30,16 +47,19 @@ export default function BrandsListPage() {
         return [];
       }
       
+      console.log("Fetched brands:", data?.length || 0);
       return data || [];
     },
   });
 
+  // Fetch categories
   const { data: categories = [] } = useQuery({
     queryKey: ['brand-categories'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('brand_categories')
-        .select('*');
+        .select('*')
+        .order('category');
         
       if (error) {
         console.error('Error fetching categories:', error);
@@ -70,7 +90,9 @@ export default function BrandsListPage() {
 
   const handleSearchResultSelect = (result: any) => {
     if (result.type === 'brand') {
-      navigate(`/brand/${result.id}`);
+      // Use slug if available, otherwise use brand_id
+      const slug = result.slug || result.id;
+      navigate(`/brand/${slug}`);
     } else if (result.type === 'category') {
       setSelectedCategory(result.name);
       setTimeout(() => {
