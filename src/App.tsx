@@ -11,10 +11,13 @@ import Register from "@/pages/register";
 import ResetPassword from "@/pages/reset-password";
 import Brand from "@/pages/brand";
 import Brands from "@/pages/brands";
+import BlogsPage from "@/pages/blogs";
+import BlogPage from "@/pages/blog";
 import WriteReview from "@/pages/write-review";
 import MyReviews from "@/pages/my-reviews";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminBrands from "@/pages/admin/brands";
+import AdminBlogs from "@/pages/admin/blogs";
 import AdminReviews from "@/pages/admin/reviews";
 import AdminUsers from "@/pages/admin/users";
 import NotFound from "@/pages/NotFound";
@@ -47,6 +50,8 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/brand/:slugOrId" element={<Brand />} />
               <Route path="/brands" element={<Brands />} />
+              <Route path="/blog" element={<BlogsPage />} />
+              <Route path="/blog/:slug" element={<BlogPage />} />
               <Route path="/write-review" element={<WriteReview />} />
               <Route path="/write-review/:brandId" element={<WriteReview />} />
               <Route path="/my-reviews" element={<MyReviews />} />
@@ -54,6 +59,7 @@ function App() {
               <Route path="/category/:category" element={<Subcategory />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/brands" element={<AdminBrands />} />
+              <Route path="/admin/blogs" element={<AdminBlogs />} />
               <Route path="/admin/reviews" element={<AdminReviews />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="*" element={<NotFound />} />

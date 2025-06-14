@@ -47,6 +47,72 @@ export type Database = {
           },
         ]
       }
+      blogs: {
+        Row: {
+          author_name: string
+          blog_id: string
+          category: string
+          content: string
+          created_at: string
+          excerpt: string
+          featured_image_url: string
+          is_published: boolean
+          keywords: string[] | null
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string
+          read_time_minutes: number
+          slug: string
+          tagged_brands: string[] | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          youtube_video_url: string | null
+        }
+        Insert: {
+          author_name: string
+          blog_id?: string
+          category: string
+          content: string
+          created_at?: string
+          excerpt: string
+          featured_image_url: string
+          is_published?: boolean
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string
+          read_time_minutes?: number
+          slug: string
+          tagged_brands?: string[] | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          youtube_video_url?: string | null
+        }
+        Update: {
+          author_name?: string
+          blog_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          excerpt?: string
+          featured_image_url?: string
+          is_published?: boolean
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string
+          read_time_minutes?: number
+          slug?: string
+          tagged_brands?: string[] | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          youtube_video_url?: string | null
+        }
+        Relationships: []
+      }
       brand_products: {
         Row: {
           brand_id: string
@@ -480,6 +546,13 @@ export type Database = {
       }
     }
     Views: {
+      blog_categories: {
+        Row: {
+          blog_count: number | null
+          category: string | null
+        }
+        Relationships: []
+      }
       brand_categories: {
         Row: {
           brand_count: number | null
@@ -497,7 +570,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

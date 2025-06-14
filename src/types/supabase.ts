@@ -164,6 +164,70 @@ export interface Database {
           head_office_address?: Json;
         };
       };
+      blogs: {
+        Row: {
+          blog_id: string;
+          title: string;
+          slug: string;
+          excerpt: string;
+          content: string;
+          featured_image_url: string;
+          youtube_video_url?: string;
+          category: string;
+          read_time_minutes: number;
+          tags: string[];
+          tagged_brands?: string[];
+          author_name: string;
+          published_at: string;
+          created_at: string;
+          updated_at: string;
+          is_published: boolean;
+          meta_title?: string;
+          meta_description?: string;
+          keywords?: string[];
+        };
+        Insert: {
+          blog_id?: string;
+          title: string;
+          slug: string;
+          excerpt: string;
+          content: string;
+          featured_image_url: string;
+          youtube_video_url?: string;
+          category: string;
+          read_time_minutes?: number;
+          tags?: string[];
+          tagged_brands?: string[];
+          author_name: string;
+          published_at?: string;
+          created_at?: string;
+          updated_at?: string;
+          is_published?: boolean;
+          meta_title?: string;
+          meta_description?: string;
+          keywords?: string[];
+        };
+        Update: {
+          blog_id?: string;
+          title?: string;
+          slug?: string;
+          excerpt?: string;
+          content?: string;
+          featured_image_url?: string;
+          youtube_video_url?: string;
+          category?: string;
+          read_time_minutes?: number;
+          tags?: string[];
+          tagged_brands?: string[];
+          author_name?: string;
+          published_at?: string;
+          updated_at?: string;
+          is_published?: boolean;
+          meta_title?: string;
+          meta_description?: string;
+          keywords?: string[];
+        };
+      };
       reviews: {
         Row: {
           review_id: string;

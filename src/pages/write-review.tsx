@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,14 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
 import { mockBrands } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ReviewCategory } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -35,7 +26,6 @@ export default function WriteReviewPage() {
   // Form states
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
-  const [category, setCategory] = useState<ReviewCategory | "">("");
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -69,15 +59,6 @@ export default function WriteReviewPage() {
     enabled: !!brandId,
   });
   
-  // Category options
-  const categories: ReviewCategory[] = [
-    "customer service",
-    "broadband",
-    "billing",
-    "delivery",
-    "product quality"
-  ];
-  
   // Handle rating change
   const handleRatingChange = (value: number) => {
     setRating(value);
@@ -99,11 +80,6 @@ export default function WriteReviewPage() {
       return;
     }
     
-    if (!category) {
-      setError("Please select a category");
-      return;
-    }
-    
     // Submit the review
     setIsSubmitting(true);
     
@@ -115,7 +91,7 @@ export default function WriteReviewPage() {
         user_id: user!.user_id,
         brand_id: brandId,
         rating,
-        category: category as ReviewCategory,
+        category: "general", // Default category since we removed the dropdown
         review_text: reviewText || `${rating} star rating`, // Default text if no review provided
         status: "approved", // Direct approval - no admin moderation needed
         created_at: new Date().toISOString(),
@@ -265,26 +241,6 @@ export default function WriteReviewPage() {
               </div>
             </div>
             
-            {/* Category */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Category *</label>
-              <Select
-                value={category}
-                onValueChange={(value) => setCategory(value as ReviewCategory)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
             {/* Review Text */}
             <div className="space-y-2">
               <label htmlFor="reviewText" className="text-sm font-medium">
@@ -318,7 +274,7 @@ export default function WriteReviewPage() {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !rating || !category}
+              disabled={isSubmitting || !rating}
             >
               {isSubmitting ? "Submitting..." : "Submit Rating"}
             </Button>
