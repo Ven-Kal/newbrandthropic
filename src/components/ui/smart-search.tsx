@@ -3,15 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "./input";
 import { supabase } from "@/lib/supabase";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 
 interface SearchResult {
-  type: 'brand' | 'category';
   id: string;
-  name: string;
+  title: string;
+  type: 'blog' | 'brand' | 'category';
+  slug?: string;
   category?: string;
-  logo_url?: string;
+  excerpt?: string;
 }
 
 interface SmartSearchProps {
@@ -23,190 +22,177 @@ interface SmartSearchProps {
 }
 
 export function SmartSearch({
-  placeholder = "Search brands, categories, or products...",
+  placeholder = "Search...",
   value,
   onChange,
   onResultSelect,
-  className
+  className = ""
 }: SmartSearchProps) {
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  
-  // Fetch search results when user types
-  const { data: searchResults = [] } = useQuery({
-    queryKey: ['search', value],
-    queryFn: async () => {
-      if (!value || value.length < 2) return [];
-      
-      const results: SearchResult[] = [];
-      
-      // Search brands
-      const { data: brands } = await supabase
-        .from('brands')
-        .select('brand_id, brand_name, category, logo_url')
-        .ilike('brand_name', `%${value}%`)
-        .limit(6);
-        
-      if (brands) {
-        results.push(...brands.map(brand => ({
-          type: 'brand' as const,
-          id: brand.brand_id,
-          name: brand.brand_name,
-          category: brand.category,
-          logo_url: brand.logo_url
-        })));
-      }
-      
-      // Search categories
-      const { data: categories } = await supabase
-        .from('brand_categories')
-        .select('category')
-        .ilike('category', `%${value}%`)
-        .limit(4);
-        
-      if (categories) {
-        results.push(...categories.map(cat => ({
-          type: 'category' as const,
-          id: cat.category,
-          name: cat.category
-        })));
-      }
-      
-      return results;
-    },
-    enabled: value.length >= 2
-  });
-  
-  // Handle click outside
+
+  // Debounced search function
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const timeoutId = setTimeout(() => {
+      if (value.trim().length >= 2) {
+        performSearch(value.trim());
+      } else {
+        setResults([]);
+        setIsOpen(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
-    };
-    
+    }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || searchResults.length === 0) return;
-    
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev < searchResults.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev > 0 ? prev - 1 : searchResults.length - 1
-        );
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (highlightedIndex >= 0) {
-          handleResultSelect(searchResults[highlightedIndex]);
-        }
-        break;
-      case 'Escape':
-        setIsOpen(false);
-        setHighlightedIndex(-1);
-        break;
+
+  const performSearch = async (query: string) => {
+    setIsLoading(true);
+    try {
+      const searchResults: SearchResult[] = [];
+
+      // Search blogs
+      const { data: blogs } = await supabase
+        .from('blogs')
+        .select('blog_id, title, slug, category, excerpt')
+        .eq('is_published', true)
+        .or(`title.ilike.%${query}%, excerpt.ilike.%${query}%, category.ilike.%${query}%`)
+        .limit(5);
+
+      if (blogs) {
+        searchResults.push(...blogs.map(blog => ({
+          id: blog.blog_id,
+          title: blog.title,
+          type: 'blog' as const,
+          slug: blog.slug,
+          category: blog.category,
+          excerpt: blog.excerpt
+        })));
+      }
+
+      // Search brands
+      const { data: brands } = await supabase
+        .from('brands')
+        .select('brand_id, brand_name, slug, category')
+        .or(`brand_name.ilike.%${query}%, category.ilike.%${query}%`)
+        .limit(5);
+
+      if (brands) {
+        searchResults.push(...brands.map(brand => ({
+          id: brand.brand_id,
+          title: brand.brand_name,
+          type: 'brand' as const,
+          slug: brand.slug,
+          category: brand.category
+        })));
+      }
+
+      setResults(searchResults);
+      setIsOpen(searchResults.length > 0);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
+      setIsOpen(false);
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleResultSelect = (result: SearchResult) => {
-    onChange(result.name);
+
+  const handleResultClick = (result: SearchResult) => {
     setIsOpen(false);
-    setHighlightedIndex(-1);
     onResultSelect?.(result);
   };
-  
-  const highlightMatch = (text: string, query: string) => {
-    if (!query) return text;
-    
-    const regex = new RegExp(`(${query})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-200 rounded px-1">$1</mark>');
+
+  const clearSearch = () => {
+    onChange("");
+    setResults([]);
+    setIsOpen(false);
   };
-  
+
   return (
     <div ref={searchRef} className={`relative ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={placeholder}
           value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setIsOpen(true);
-            setHighlightedIndex(-1);
+          onChange={(e) => onChange(e.target.value)}
+          className="pl-10 pr-10"
+          onFocus={() => {
+            if (results.length > 0) setIsOpen(true);
           }}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setIsOpen(true)}
-          className="pl-10 pr-10 h-12 text-base border-2 border-gray-200 focus:border-primary-500 rounded-xl shadow-sm"
         />
         {value && (
           <button
-            onClick={() => {
-              onChange('');
-              setIsOpen(false);
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
-      
-      {isOpen && searchResults.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
-          {searchResults.map((result, index) => (
-            <div
-              key={`${result.type}-${result.id}`}
-              className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${
-                index === highlightedIndex 
-                  ? 'bg-primary-50 border-l-4 border-primary-500' 
-                  : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleResultSelect(result)}
-            >
-              {result.type === 'brand' && result.logo_url && (
-                <img 
-                  src={result.logo_url} 
-                  alt={result.name}
-                  className="w-8 h-8 object-contain rounded"
-                />
-              )}
-              {result.type === 'category' && (
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center text-white text-xs font-bold">
-                  {result.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="flex-1">
-                <div 
-                  className="font-medium text-gray-900"
-                  dangerouslySetInnerHTML={{ 
-                    __html: highlightMatch(result.name, value) 
-                  }}
-                />
-                {result.type === 'brand' && result.category && (
-                  <div className="text-sm text-gray-500 capitalize">
-                    {result.category}
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+          {isLoading ? (
+            <div className="p-4 text-center text-gray-500">Searching...</div>
+          ) : results.length > 0 ? (
+            <div className="py-2">
+              {results.map((result) => (
+                <button
+                  key={`${result.type}-${result.id}`}
+                  onClick={() => handleResultClick(result)}
+                  className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">
+                        {result.title}
+                      </div>
+                      {result.excerpt && (
+                        <div className="text-sm text-gray-500 mt-1 line-clamp-1">
+                          {result.excerpt}
+                        </div>
+                      )}
+                      {result.category && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          {result.category}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-2 flex-shrink-0">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        result.type === 'blog' 
+                          ? 'bg-blue-100 text-blue-800'
+                          : result.type === 'brand'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {result.type}
+                      </span>
+                    </div>
                   </div>
-                )}
-                {result.type === 'category' && (
-                  <div className="text-sm text-gray-500">
-                    Category
-                  </div>
-                )}
-              </div>
+                </button>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              No results found for "{value}"
+            </div>
+          )}
         </div>
       )}
     </div>

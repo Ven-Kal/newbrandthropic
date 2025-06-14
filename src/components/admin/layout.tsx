@@ -7,10 +7,11 @@ import {
   Building,
   MessageSquare,
   Settings,
-  Users
+  Users,
+  FileText
 } from "lucide-react";
 
-type AdminRoute = "dashboard" | "brands" | "reviews" | "users" | "settings";
+type AdminRoute = "dashboard" | "brands" | "blogs" | "reviews" | "users" | "settings";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -34,6 +35,12 @@ export function AdminLayout({ children, title, active }: AdminLayoutProps) {
       href: "/admin/brands",
       icon: <Building className="h-5 w-5" />,
       id: "brands" as AdminRoute
+    },
+    {
+      name: "Blogs",
+      href: "/admin/blogs",
+      icon: <FileText className="h-5 w-5" />,
+      id: "blogs" as AdminRoute
     },
     {
       name: "Reviews",
