@@ -9,9 +9,10 @@ interface ReviewCardProps {
   review: Review;
   showActions?: boolean;
   onDelete?: (id: string) => void;
+  onUpdate?: () => void;
 }
 
-export function ReviewCard({ review, showActions = false, onDelete }: ReviewCardProps) {
+export function ReviewCard({ review, showActions = false, onDelete, onUpdate }: ReviewCardProps) {
   const formattedDate = formatDistanceToNow(new Date(review.created_at), { addSuffix: true });
   
   return (

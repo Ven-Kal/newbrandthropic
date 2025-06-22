@@ -1,110 +1,169 @@
 
-import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard,
-  Building,
-  MessageSquare,
-  Settings,
-  Users,
-  FileText
+  LayoutDashboard, 
+  Building, 
+  MessageSquare, 
+  Users, 
+  PenTool,
+  Search,
+  LogOut,
+  Menu,
+  X
 } from "lucide-react";
 
-type AdminRoute = "dashboard" | "brands" | "blogs" | "reviews" | "users" | "settings";
-
-interface AdminLayoutProps {
-  children: ReactNode;
-  title: string;
-  active: AdminRoute;
-}
-
-export function AdminLayout({ children, title, active }: AdminLayoutProps) {
+export function AdminLayout() {
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
-  
-  // Navigation links
-  const navItems = [
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Redirect if not authenticated or not admin
+  if (!isAuthenticated || user?.role !== 'admin') {
+    return <Navigate to="/login" replace />;
+  }
+
+  const navigation = [
     {
-      name: "Dashboard",
-      href: "/admin",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      id: "dashboard" as AdminRoute
+      name: 'Dashboard',
+      href: '/admin/dashboard',
+      icon: LayoutDashboard,
+      current: location.pathname === '/admin/dashboard'
     },
     {
-      name: "Brands",
-      href: "/admin/brands",
-      icon: <Building className="h-5 w-5" />,
-      id: "brands" as AdminRoute
+      name: 'Brands',
+      href: '/admin/brands',
+      icon: Building,
+      current: location.pathname === '/admin/brands'
     },
     {
-      name: "Blogs",
-      href: "/admin/blogs",
-      icon: <FileText className="h-5 w-5" />,
-      id: "blogs" as AdminRoute
+      name: 'Reviews',
+      href: '/admin/reviews',
+      icon: MessageSquare,
+      current: location.pathname === '/admin/reviews'
     },
     {
-      name: "Reviews",
-      href: "/admin/reviews",
-      icon: <MessageSquare className="h-5 w-5" />,
-      id: "reviews" as AdminRoute
+      name: 'Blogs',
+      href: '/admin/blogs',
+      icon: PenTool,
+      current: location.pathname === '/admin/blogs'
     },
     {
-      name: "Users",
-      href: "/admin/users",
-      icon: <Users className="h-5 w-5" />,
-      id: "users" as AdminRoute
+      name: 'Users',
+      href: '/admin/users',
+      icon: Users,
+      current: location.pathname === '/admin/users'
     },
     {
-      name: "Settings",
-      href: "/admin/settings",
-      icon: <Settings className="h-5 w-5" />,
-      id: "settings" as AdminRoute
+      name: 'SEO Manager',
+      href: '/admin/seo',
+      icon: Search,
+      current: location.pathname === '/admin/seo'
     }
   ];
-  
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="hidden md:flex flex-col w-64 border-r bg-white">
-        <div className="h-16 flex items-center px-6 border-b">
-          <Link to="/admin" className="text-xl font-bold text-brandblue-800">
-            Admin Panel
+      <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="flex items-center justify-between h-16 px-6 bg-primary">
+          <Link to="/admin/dashboard" className="text-white font-bold text-xl">
+            Brandthropic Admin
           </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(false)}
+            className="text-white lg:hidden"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
         
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                active === item.id
-                  ? "bg-brandblue-50 text-brandblue-800"
-                  : "text-gray-700 hover:bg-gray-100"
-              )}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </Link>
-          ))}
+        <nav className="mt-8">
+          <div className="px-3 space-y-1">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    item.current
+                      ? 'bg-primary text-white'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-primary'
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <div className="flex items-center px-3 py-2 text-sm">
+            <div className="flex-1">
+              <p className="font-medium text-gray-700">{user?.name}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={logout}
+              className="text-gray-500 hover:text-red-600"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-16 border-b bg-white flex items-center justify-between px-6">
-          <h1 className="text-xl font-bold">{title}</h1>
-          
-          {/* Mobile nav toggle would go here */}
-        </header>
-        
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+
+      {/* Main content */}
+      <div className="lg:pl-64">
+        {/* Top navbar */}
+        <div className="sticky top-0 z-10 bg-white shadow-sm border-b">
+          <div className="flex items-center justify-between h-16 px-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            
+            <div className="flex items-center space-x-4">
+              <Link to="/" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">
+                  View Site
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="p-6">
+          <Outlet />
         </main>
       </div>
     </div>
   );
 }
+
+export default AdminLayout;
