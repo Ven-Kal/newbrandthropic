@@ -2,8 +2,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { AdminLayout } from "@/components/admin/layout";
-import { DuplicateDetector } from "@/components/admin/duplicate-detector";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -116,8 +114,15 @@ export default function AdminDashboardPage() {
   }
   
   return (
-    <AdminLayout title="Dashboard" active="dashboard">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600 mt-2">
+          Welcome to your admin dashboard. Here's an overview of your platform.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Brands</CardTitle>
@@ -163,12 +168,7 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
       
-      {/* Duplicate Detection Section */}
-      <div className="mb-8">
-        <DuplicateDetector />
-      </div>
-      
-      <Card className="mb-8">
+      <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
@@ -194,6 +194,6 @@ export default function AdminDashboardPage() {
           )}
         </CardContent>
       </Card>
-    </AdminLayout>
+    </div>
   );
 }

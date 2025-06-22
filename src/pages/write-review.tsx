@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,7 @@ export default function WriteReviewPage() {
         user_id: user!.user_id,
         brand_id: brandId,
         rating,
-        category: "general", // Default category since we removed the dropdown
+        category: "customer service", // Use a valid category that matches the constraint
         review_text: reviewText || `${rating} star rating`, // Default text if no review provided
         status: "approved", // Direct approval - no admin moderation needed
         created_at: new Date().toISOString(),
@@ -193,7 +194,7 @@ export default function WriteReviewPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Rate & Review</CardTitle>
           <CardDescription>
-            Share your rating and experience with {brand.brand_name}
+            Share your rating and experience with {brand?.brand_name}
           </CardDescription>
         </CardHeader>
         
@@ -202,14 +203,14 @@ export default function WriteReviewPage() {
             {/* Brand Info */}
             <div className="flex items-center gap-4">
               <img
-                src={brand.logo_url}
-                alt={brand.brand_name}
+                src={brand?.logo_url}
+                alt={brand?.brand_name}
                 className="w-16 h-16 object-contain"
               />
               <div>
-                <h3 className="font-medium">{brand.brand_name}</h3>
+                <h3 className="font-medium">{brand?.brand_name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {brand.category}
+                  {brand?.category}
                 </p>
               </div>
             </div>
@@ -232,7 +233,7 @@ export default function WriteReviewPage() {
                         (hoverRating !== null
                           ? value <= hoverRating
                           : value <= rating)
-                          ? "text-yellow-400 fill-yellow-400"
+                          ? "text-orange-400 fill-orange-400"
                           : "text-gray-300"
                       }`}
                     />

@@ -76,9 +76,9 @@ export default function HomePage() {
 
   const handleSearchResultSelect = (result: any) => {
     if (result.type === 'brand') {
-      navigate(`/brand/${result.id}`);
+      navigate(`/brand/${result.slug || result.id}`);
     } else if (result.type === 'category') {
-      setSelectedCategory(result.name);
+      setSelectedCategory(result.category);
       setTimeout(() => {
         brandsRef.current?.scrollIntoView({ 
           behavior: 'smooth',

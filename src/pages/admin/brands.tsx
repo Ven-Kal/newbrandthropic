@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { AdminLayout } from "@/components/admin/layout";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload, Search, PencilLine, Download, BookOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -122,9 +122,16 @@ export default function AdminBrandsPage() {
   }
   
   return (
-    <AdminLayout title="Brand Management" active="brands">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Brand Management</h1>
+        <p className="text-gray-600 mt-2">
+          Manage brands, upload logos, and optimize SEO settings.
+        </p>
+      </div>
+
       {/* Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -198,7 +205,7 @@ export default function AdminBrandsPage() {
                 const seoScore = [
                   brand.meta_title,
                   brand.meta_description,
-                  brand.alt_text,
+                  brand.logo_alt,
                   brand.canonical_url
                 ].filter(Boolean).length;
                 
@@ -208,7 +215,7 @@ export default function AdminBrandsPage() {
                       <div className="flex items-center gap-3">
                         <img
                           src={brand.logo_url || "/placeholder.svg"}
-                          alt={brand.alt_text || `${brand.brand_name} logo`}
+                          alt={brand.logo_alt || `${brand.brand_name} logo`}
                           className="w-8 h-8 object-contain"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = "/placeholder.svg";
@@ -362,6 +369,6 @@ export default function AdminBrandsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
+    </div>
   );
 }

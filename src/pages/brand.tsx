@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -8,23 +7,27 @@ import { BrandReviews } from "@/components/brand/brand-reviews";
 import { EnhancedSEOHead } from "@/components/seo/enhanced-seo-head";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { SimilarBrands } from "@/components/similar-brands";
+import { SmartSearch } from "@/components/ui/smart-search";
 import { Button } from "@/components/ui/button";
 import { Brand } from "@/types";
 import { toast } from "@/components/ui/use-toast";
-import { Star, Edit, Facebook, Twitter, Instagram, Linkedin, Phone, Mail, Globe, AlertTriangle } from "lucide-react";
+import { Star, Edit, Facebook, Twitter, Instagram, Linkedin, Phone, Mail, Globe, AlertTriangle, Grid, List } from "lucide-react";
 
 export default function BrandPage() {
-  const { slugOrId } = useParams<{ slugOrId: string }>();
+  const { brandId } = useParams<{ brandId: string }>();
   const navigate = useNavigate();
   const [brand, setBrand] = useState<Brand | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Fetch brand data - try by slug first, then by ID
-  const { data: brandData, isLoading, error } = useQuery({
-    queryKey: ['brand', slugOrId],
+  const { data: brandData, isLoading, error, refetch } = useQuery({
+    queryKey: ['brand', brandId],
     queryFn: async () => {
-      if (!slugOrId) return null;
+      if (!brandId) return null;
       
-      console.log("Fetching brand with slug/ID:", slugOrId);
+      console.log("Fetching brand with slug/ID:", brandId);
       
       // First try to fetch by slug (case-insensitive)
       let { data, error } = await supabase
@@ -46,7 +49,7 @@ export default function BrandPage() {
           escalation_contact_name,
           head_office_address
         `)
-        .ilike('slug', slugOrId)
+        .ilike('slug', brandId)
         .maybeSingle();
       
       // If not found by slug, try by brand_id
@@ -71,7 +74,7 @@ export default function BrandPage() {
             escalation_contact_name,
             head_office_address
           `)
-          .eq('brand_id', slugOrId)
+          .eq('brand_id', brandId)
           .maybeSingle();
         
         data = result.data;
@@ -86,15 +89,62 @@ export default function BrandPage() {
       console.log("Brand data found:", data);
       return data;
     },
-    enabled: !!slugOrId,
+    enabled: !!brandId,
+  });
+
+  // Fetch similar brands (ONLY from same category, excluding current brand)
+  const { data: similarBrands = [] } = useQuery({
+    queryKey: ['similar-brands-category', brand?.category, brand?.brand_id],
+    queryFn: async () => {
+      if (!brand) return [];
+      
+      console.log("Fetching similar brands for category:", brand.category);
+      
+      const { data, error } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('category', brand.category)
+        .neq('brand_id', brand.brand_id)
+        .order('rating_avg', { ascending: false })
+        .limit(12);
+        
+      if (error) {
+        console.error('Error fetching similar brands:', error);
+        return [];
+      }
+      
+      console.log(`Found ${data?.length || 0} similar brands in ${brand.category} category`);
+      return data || [];
+    },
+    enabled: !!brand,
+  });
+
+  // Fetch categories for search
+  const { data: categories = [] } = useQuery({
+    queryKey: ['brand-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('brand_categories')
+        .select('*')
+        .order('category');
+        
+      if (error) {
+        console.error('Error fetching brand categories:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
   });
 
   useEffect(() => {
     if (brandData) {
       setBrand(brandData);
+      // Reset category selection when brand changes
+      setSelectedCategory("all");
       // Scroll to top when brand page loads
       window.scrollTo(0, 0);
-    } else if (!isLoading && !brandData && slugOrId) {
+    } else if (!isLoading && !brandData && brandId) {
       toast({
         title: "Brand not found",
         description: "The brand you're looking for doesn't exist.",
@@ -102,7 +152,48 @@ export default function BrandPage() {
       });
       navigate('/brands');
     }
-  }, [brandData, isLoading, slugOrId, navigate]);
+  }, [brandData, isLoading, brandId, navigate]);
+
+  // Filter similar brands based on search and category
+  const filteredSimilarBrands = similarBrands.filter((b) => {
+    const matchesSearch = b.brand_name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || b.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleSearchResultSelect = (result: any) => {
+    if (result.type === 'brand') {
+      navigate(`/brand/${result.slug || result.id}`);
+    } else if (result.type === 'category') {
+      setSelectedCategory(result.category);
+      // Scroll to similar brands section
+      setTimeout(() => {
+        document.getElementById('similar-brands')?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    // Scroll to similar brands section
+    setTimeout(() => {
+      document.getElementById('similar-brands')?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
+  };
+
+  // Handle rating updates by refetching brand data
+  const handleRatingUpdate = () => {
+    console.log("Rating updated, refetching brand data...");
+    refetch();
+  };
 
   if (isLoading) {
     return (
@@ -175,7 +266,7 @@ export default function BrandPage() {
                           key={i}
                           className={`w-5 h-5 ${
                             i < Math.floor(brand.rating_avg)
-                              ? "text-yellow-400 fill-current"
+                              ? "text-orange-400 fill-current"
                               : "text-gray-300"
                           }`}
                         />
@@ -312,7 +403,7 @@ export default function BrandPage() {
           
           {/* Reviews Section */}
           <div className="mb-8">
-            <BrandReviews brand={brand} />
+            <BrandReviews brand={brand} onRatingUpdate={handleRatingUpdate} />
           </div>
           
           {/* Additional Contact Information */}
@@ -320,8 +411,63 @@ export default function BrandPage() {
             <ContactInfo brand={brand} />
           </div>
           
-          {/* Similar Brands Section */}
-          <SimilarBrands currentBrand={brand} />
+          {/* Enhanced Similar Brands Section with Search */}
+          <section id="similar-brands" className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Similar Brands in {brand.category}
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Discover other brands in the {brand.category} category
+              </p>
+              
+              {/* Search Bar */}
+              <div className="max-w-2xl mb-6">
+                <SmartSearch
+                  placeholder={`Search ${brand.category} brands...`}
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onResultSelect={handleSearchResultSelect}
+                  className="bg-white"
+                />
+              </div>
+
+              {/* View Toggle */}
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-gray-600">
+                  {searchQuery
+                    ? `Search results in ${brand.category} for "${searchQuery}"`
+                    : `${similarBrands.length} brands found in ${brand.category}`}
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <Grid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Brands Grid/List */}
+            <SimilarBrands 
+              currentBrand={brand} 
+              searchQuery={searchQuery}
+              selectedCategory={brand.category}
+              filteredBrands={filteredSimilarBrands}
+              viewMode={viewMode}
+            />
+          </section>
         </div>
       </main>
     </>

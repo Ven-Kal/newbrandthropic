@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { AdminLayout } from "@/components/admin/layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -158,9 +157,16 @@ export default function AdminReviewsPage() {
   }
   
   return (
-    <AdminLayout title="Review Management" active="reviews">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Review Management</h1>
+        <p className="text-gray-600 mt-2">
+          Moderate and manage user reviews across all brands.
+        </p>
+      </div>
+
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -291,6 +297,6 @@ export default function AdminReviewsPage() {
           </TableBody>
         </Table>
       </div>
-    </AdminLayout>
+    </div>
   );
 }

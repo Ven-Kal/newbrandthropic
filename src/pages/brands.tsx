@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { BrandCard } from "@/components/brand-card";
-import { SearchInput } from "@/components/ui/search-input";
+import { SmartSearch } from "@/components/ui/smart-search";
 import { Button } from "@/components/ui/button";
 import { EnhancedSEOHead } from "@/components/seo/enhanced-seo-head";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
@@ -15,6 +15,7 @@ function BrandsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const brandsRef = useRef<HTMLElement>(null);
 
   // Fetch brands from Supabase
   const { data: brands = [], isLoading } = useQuery({
@@ -60,6 +61,31 @@ function BrandsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    // Smooth scroll to brands section
+    setTimeout(() => {
+      brandsRef.current?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
+  };
+
+  const handleSearchResultSelect = (result: any) => {
+    if (result.type === 'brand') {
+      window.location.href = `/brand/${result.slug || result.id}`;
+    } else if (result.type === 'category') {
+      setSelectedCategory(result.category);
+      setTimeout(() => {
+        brandsRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  };
+
   const breadcrumbs = [
     { name: "Brands", url: "/brands" }
   ];
@@ -84,10 +110,11 @@ function BrandsPage() {
               />
               
               <div className="max-w-2xl mx-auto mt-8">
-                <SearchInput
+                <SmartSearch
                   placeholder="Search brands..."
                   value={searchQuery}
                   onChange={setSearchQuery}
+                  onResultSelect={handleSearchResultSelect}
                   className="bg-white rounded-lg shadow-lg"
                 />
               </div>
@@ -103,7 +130,7 @@ function BrandsPage() {
             
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
               <button
-                onClick={() => setSelectedCategory("all")}
+                onClick={() => handleCategorySelect("all")}
                 className={`group p-6 rounded-xl text-center transition-all duration-300 transform hover:scale-105 ${
                   selectedCategory === "all"
                     ? "bg-primary text-white shadow-lg"
@@ -119,7 +146,7 @@ function BrandsPage() {
               {categories.map((cat) => (
                 <button
                   key={cat.category}
-                  onClick={() => setSelectedCategory(cat.category)}
+                  onClick={() => handleCategorySelect(cat.category)}
                   className={`group p-6 rounded-xl text-center transition-all duration-300 transform hover:scale-105 ${
                     selectedCategory === cat.category
                       ? "bg-primary text-white shadow-lg"
@@ -141,7 +168,7 @@ function BrandsPage() {
           </div>
         </section>
 
-        <section className="py-16 bg-white">
+        <section ref={brandsRef} className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <Breadcrumbs items={breadcrumbs} />
             
