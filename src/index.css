@@ -108,26 +108,19 @@
   }
 
   /* Remove any yellow backgrounds completely */
-  .bg-yellow-50,
-  .bg-yellow-100,
-  .bg-yellow-200,
-  .bg-yellow-300,
-  .bg-yellow-400,
-  .bg-yellow-500 {
+  
     @apply bg-white !important;
   }
 
   /* Replace yellow text colors with orange */
-  .text-yellow-400,
-  .text-yellow-500,
-  .text-yellow-600 {
+  .text-black-400,
+  .text-black-500,
+  .text-black-600 {
     @apply text-orange-400 !important;
   }
 
   /* Replace yellow borders with gray */
-  .border-yellow-200,
-  .border-yellow-300,
-  .border-yellow-400 {
+   {
     @apply border-gray-200 !important;
   }
 
