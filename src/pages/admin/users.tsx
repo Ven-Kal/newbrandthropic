@@ -138,7 +138,7 @@ export default function AdminUsersPage() {
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                       user.is_verified 
                         ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
+                        : 'bg-white text-gray-800 border border-gray-200'
                     }`}>
                       {user.is_verified ? 'Verified' : 'Unverified'}
                     </span>

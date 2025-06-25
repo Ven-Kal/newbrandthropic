@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -248,7 +247,7 @@ export default function AdminReviewsPage() {
                     <div className={cn(
                       "px-2 py-1 text-xs rounded-full font-medium inline-block",
                       {
-                        "bg-yellow-100 text-yellow-800": review.status === "pending",
+                        "bg-white text-gray-800 border border-gray-200": review.status === "pending",
                         "bg-green-100 text-green-800": review.status === "approved",
                         "bg-red-100 text-red-800": review.status === "rejected",
                       }

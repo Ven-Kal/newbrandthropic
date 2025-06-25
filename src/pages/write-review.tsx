@@ -31,6 +31,28 @@ export default function WriteReviewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   
+  // Check if user has already reviewed this brand
+  const { data: existingReview, isLoading: isCheckingReview } = useQuery({
+    queryKey: ['user-review', brandId, user?.user_id],
+    queryFn: async () => {
+      if (!brandId || !user?.user_id) return null;
+      
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('brand_id', brandId)
+        .eq('user_id', user.user_id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+        console.error('Error checking existing review:', error);
+      }
+      
+      return data;
+    },
+    enabled: !!brandId && !!user?.user_id && isAuthenticated,
+  });
+  
   // Fetch brand details
   const { data: brand, isLoading: isBrandLoading } = useQuery({
     queryKey: ['brand', brandId],
@@ -101,6 +123,9 @@ export default function WriteReviewPage() {
       
       if (error) {
         console.error("Review submission error:", error);
+        if (error.code === '23505') { // Unique constraint violation
+          throw new Error("You have already reviewed this brand. Each user can only submit one review per brand.");
+        }
         throw new Error(`Review submission failed: ${error.message}`);
       }
       
@@ -144,7 +169,7 @@ export default function WriteReviewPage() {
   };
 
   // If brand not found
-  if (isBrandLoading) {
+  if (isBrandLoading || isCheckingReview) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Loading...</h1>
@@ -181,6 +206,55 @@ export default function WriteReviewPage() {
               className="w-full"
             >
               Sign In
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // If user has already reviewed this brand
+  if (existingReview) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle>Review Already Submitted</CardTitle>
+            <CardDescription>
+              You have already reviewed {brand?.brand_name}. Each user can only submit one review per brand.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Your rating:</p>
+              <div className="flex justify-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <Star
+                    key={value}
+                    className={`h-6 w-6 ${
+                      value <= existingReview.rating
+                        ? "text-orange-400 fill-orange-400"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+              {existingReview.review_text && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Your review:</p>
+                  <p className="text-sm bg-gray-50 p-3 rounded border">
+                    {existingReview.review_text}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              onClick={() => navigate(`/brand/${brandId}`)}
+              className="w-full"
+            >
+              Back to Brand Page
             </Button>
           </CardFooter>
         </Card>

@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { SmartSearch } from "@/components/ui/smart-search";
 import { Brand } from "@/types";
@@ -7,6 +6,7 @@ import { FeatureCards } from "@/components/feature-cards";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { PageLayout } from "@/components/layout/page-layout";
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -89,7 +89,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <PageLayout>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 text-white">
         <div className="container mx-auto px-4 py-16">
@@ -100,15 +100,15 @@ export default function HomePage() {
                 Brandthropic
               </h1>
               <p className="text-xl md:text-2xl opacity-90 animate-fade-in font-light italic">
-                You're well Heard here
+                
               </p>
             </div>
             
             <h2 className="text-2xl md:text-3xl font-semibold mb-4 animate-fade-in">
-              Find Customer Service Information for Any Brand
+              Your Super-app for Customer Service
             </h2>
             <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto animate-fade-in">
-              Get contact details, submit reviews, and connect with customer service all in one place
+              It has everything that you need about Customer Service
             </p>
             
             <div className="max-w-2xl mx-auto animate-bounce-in">
@@ -245,6 +245,6 @@ export default function HomePage() {
           )}
         </div>
       </section>
-    </main>
+    </PageLayout>
   );
 }
