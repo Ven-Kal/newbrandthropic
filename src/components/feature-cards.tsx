@@ -78,7 +78,7 @@ export function FeatureCards() {
                     {feature.description}
                   </p>
                   <div className="mt-3 text-xs text-primary font-medium">
-                    Click for details
+                    
                   </div>
                 </div>
                 

@@ -114,9 +114,9 @@ export function CSVTemplate() {
           </ul>
         </div>
         
-        <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-          <p className="font-semibold text-yellow-800 mb-1">Naming Conventions:</p>
-          <ul className="text-yellow-700 space-y-1">
+        <div className="bg-white p-3 rounded border border-gray-200">
+          <p className="font-semibold text-gray-800 mb-1">Naming Conventions:</p>
+          <ul className="text-gray-700 space-y-1">
             <li>• Use proper capitalization for brand names</li>
             <li>• Include "Ltd", "Pvt Ltd", "Corp" etc. for legal entity names</li>
             <li>• Use descriptive product names</li>

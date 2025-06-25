@@ -25,9 +25,16 @@ export function Navbar() {
     <header className="bg-white border-b sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-brandblue-800">
-              Brandthropic
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src="/logo-brand.png" 
+                alt="Brandthropic Logo" 
+                className="h-8 w-auto"
+              />
+              <span className="text-2xl font-bold text-brandblue-800">
+                Brandthropic
+              </span>
             </Link>
           </div>
 
@@ -40,6 +47,9 @@ export function Navbar() {
             <Link to="/brands" className="text-sm font-medium flex items-center gap-1">
               <Briefcase className="h-4 w-4" />
               Brands
+            </Link>
+            <Link to="/about" className="text-sm font-medium">
+              About Us
             </Link>
             
             {isAuthenticated && user?.role === "consumer" && (
@@ -113,6 +123,14 @@ export function Navbar() {
             >
               <Briefcase className="h-5 w-5" />
               Brands
+            </Link>
+            
+            <Link
+              to="/about"
+              className="block py-2 text-base font-medium"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              About Us
             </Link>
             
             {isAuthenticated && user?.role === "consumer" && (
