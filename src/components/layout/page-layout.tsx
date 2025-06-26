@@ -1,15 +1,26 @@
-import { Outlet } from "react-router-dom";
+
+import { ReactNode } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-export function PageLayout() {
+interface PageLayoutProps {
+  children: ReactNode;
+  showNavbar?: boolean;
+  showFooter?: boolean;
+}
+
+export function PageLayout({ 
+  children, 
+  showNavbar = true, 
+  showFooter = true 
+}: PageLayoutProps) {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Navbar />
+      {showNavbar && <Navbar />}
       <main className="flex-1">
-        <Outlet />
+        {children}
       </main>
-      <Footer />
+      {showFooter && <Footer />}
     </div>
   );
 }
