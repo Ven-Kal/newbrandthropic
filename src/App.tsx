@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,6 +18,7 @@ import AdminReviews from "@/pages/admin/reviews";
 import AdminUsers from "@/pages/admin/users";
 import AdminBlogs from "@/pages/admin/blogs";
 import AdminSEOPage from "@/pages/admin/seo";
+import { PageLayout } from "@/components/layout/page-layout"; // ✅ Added this import
 
 const queryClient = new QueryClient();
 
@@ -29,19 +29,22 @@ function App() {
         {/* Analytics Components - Replace with your actual IDs */}
         <GoogleAnalytics measurementId="GA_MEASUREMENT_ID" />
         <GoogleTagManager gtmId="GTM_CONTAINER_ID" />
-        
+
         <div className="min-h-screen bg-background font-sans antialiased">
           <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/brands" element={<BrandsPage />} />
-            <Route path="/brand/:brandId" element={<BrandPage />} />
-            <Route path="/write-review/:brandId" element={<WriteReviewPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/" element={<HomePage />} />
-            
-            {/* Admin Routes */}
+            {/* Public Routes inside layout with Navbar + Footer */}
+            <Route element={<PageLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/brands" element={<BrandsPage />} />
+              <Route path="/brand/:brandId" element={<BrandPage />} />
+              <Route path="/write-review/:brandId" element={<WriteReviewPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="*" element={<HomePage />} />
+            </Route>
+
+            {/* Admin Routes (no navbar/footer) */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="brands" element={<AdminBrands />} />
@@ -50,11 +53,9 @@ function App() {
               <Route path="blogs" element={<AdminBlogs />} />
               <Route path="seo" element={<AdminSEOPage />} />
             </Route>
-            
-            {/* Catch-all route - redirect to home */}
-            <Route path="*" element={<HomePage />} />
           </Routes>
         </div>
+
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
