@@ -12,7 +12,7 @@ interface SEOProps {
 export function SEOHead({ 
   title = "Brandthropic | Find Customer Care, Compliants & Helplines",
   description = "Search Customer care numbers, brand support emails, and complaint tools. Brandthropic helps you contact, rate & review companies easily.",
-  keywords = ["customer care number, customer service", "brand reviews", "contact information", "customer support", "Customer Complaint" Grievance Portal"],
+  keywords = ["customer care number", "customer service", "brand reviews", "contact information", "customer support", "customer complaint", "grievance portal"],
   url = window.location.href,
   image = "https://lovable.dev/opengraph-image-p98pqg.png"
 }: SEOProps) {

@@ -11,8 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { Blog } from "@/types/blog";
 import { Brand } from "@/types";
+import { ImageUploader } from "./image-uploader";
 import { toast } from "sonner";
-import { X, Tag, Image } from "lucide-react";
+import { X, Tag } from "lucide-react";
 
 interface BlogEditorProps {
   blog?: Blog | null;
@@ -220,6 +221,10 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
     }));
   };
 
+  const handleImageUploaded = (url: string) => {
+    setFormData(prev => ({ ...prev, featured_image_url: url }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -409,28 +414,11 @@ export function BlogEditor({ blog, onSave, onCancel }: BlogEditorProps) {
               <CardTitle>Media</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="featured_image_url">Featured Image URL *</Label>
-                <Input
-                  id="featured_image_url"
-                  value={formData.featured_image_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, featured_image_url: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  required
-                />
-                {formData.featured_image_url && (
-                  <div className="mt-2">
-                    <img 
-                      src={formData.featured_image_url} 
-                      alt="Featured image preview" 
-                      className="w-full h-32 object-cover rounded border"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+              <ImageUploader
+                onImageUploaded={handleImageUploaded}
+                currentImage={formData.featured_image_url}
+                label="Featured Image *"
+              />
 
               <div>
                 <Label htmlFor="youtube_video_url">YouTube Video URL</Label>

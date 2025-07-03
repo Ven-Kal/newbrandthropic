@@ -33,7 +33,7 @@ export function Navbar() {
                 className="h-8 w-auto"
               />
               <span className="text-2xl font-bold text-brandblue-800">
-                
+                Brandthropic
               </span>
             </Link>
           </div>

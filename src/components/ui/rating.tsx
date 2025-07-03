@@ -27,7 +27,7 @@ export function Rating({ value, max = 5, size = "md", className }: RatingProps) 
       {[...Array(fullStars)].map((_, i) => (
         <Star
           key={`full-star-${i}`}
-          className="text-black-400 fill-white-400"
+          className="text-yellow-400 fill-yellow-400"
           width={width}
           height={height}
         />
@@ -35,7 +35,7 @@ export function Rating({ value, max = 5, size = "md", className }: RatingProps) 
       
       {hasHalfStar && (
         <StarHalf
-          className="text-black-400 fill-white-400"
+          className="text-yellow-400 fill-yellow-400"
           width={width}
           height={height}
         />
