@@ -312,6 +312,33 @@ export type Database = {
         }
         Relationships: []
       }
+      page_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_url: string
+          session_id: string | null
+          visit_duration: number | null
+          visited_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_url: string
+          session_id?: string | null
+          visit_duration?: number | null
+          visited_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_url?: string
+          session_id?: string | null
+          visit_duration?: number | null
+          visited_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           brand_id: string
@@ -541,6 +568,60 @@ export type Database = {
           role?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      visitor_analytics: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          last_activity: string | null
+          operating_system: string | null
+          page_url: string | null
+          referrer: string | null
+          region: string | null
+          session_id: string | null
+          session_start: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          operating_system?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          region?: string | null
+          session_id?: string | null
+          session_start?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          operating_system?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          region?: string | null
+          session_id?: string | null
+          session_start?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }

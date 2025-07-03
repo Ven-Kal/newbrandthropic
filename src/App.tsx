@@ -12,6 +12,8 @@ import BrandPage from "@/pages/brand";
 import WriteReviewPage from "@/pages/write-review";
 import HomePage from "@/pages/home";
 import AboutPage from "@/pages/about";
+import BlogsPage from "@/pages/blogs";
+import BlogPage from "@/pages/blog";
 import { AdminLayout } from "@/components/admin/layout";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminBrands from "@/pages/admin/brands";
@@ -39,6 +41,8 @@ function App() {
             <Route path="/brand/:brandId" element={<BrandPage />} />
             <Route path="/write-review/:brandId" element={<WriteReviewPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/blog" element={<BlogsPage />} />
+            <Route path="/blog/:slug" element={<BlogPage />} />
             <Route path="/" element={<HomePage />} />
             
             {/* Admin Routes */}
