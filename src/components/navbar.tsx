@@ -28,7 +28,7 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
               <img 
-                src="/logo-brand.png" 
+                src="/logo-brand.jpeg" 
                 alt="Brandthropic Logo" 
                 className="h-8 w-auto"
               />
