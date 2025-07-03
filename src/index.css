@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 250 250 250;
+    --background: 0 0% 98%; /* Soft white (was 100%) */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -19,7 +18,7 @@
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 059 669 100%;
+    --secondary: 158.1 64.4% 39.4%; /* Emerald-like HSL (no yellow!) */
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
@@ -50,23 +49,32 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
+
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
+
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
+
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
+
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -76,20 +84,23 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
-    background-color: #FAFAFA;
   }
 
-  /* Fix input text visibility - ensure white background always */
-  input {
+  input,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  textarea,
+  select {
     @apply text-gray-900 bg-white border-gray-300;
     background-color: #ffffff !important;
     color: #111827 !important;
@@ -100,57 +111,37 @@
     color: #6b7280 !important;
   }
 
-  /* Ensure focus states are visible with white background */
   input:focus {
     @apply text-gray-900 bg-white border-primary;
     background-color: #ffffff !important;
     color: #111827 !important;
   }
 
-  /* Remove any yellow backgrounds completely */
-  .bg-yellow-50,
-  .bg-yellow-100,
-  .bg-yellow-200,
-  .bg-yellow-300,
-  .bg-yellow-400,
-  .bg-yellow-500 {
-    @apply bg-white !important;
-  }
-
-  /* Replace yellow text colors with orange */
-  .text-yellow-400,
-  .text-yellow-500,
-  .text-yellow-600 {
-    @apply text-orange-400 !important;
-  }
-
-  /* Replace yellow borders with gray */
-  .border-yellow-200,
-  .border-yellow-300,
-  .border-yellow-400 {
-    @apply border-gray-200 !important;
-  }
-
-  /* Ensure all form inputs have white background */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="tel"],
-  textarea,
-  select {
-    background-color: #ffffff !important;
-    color: #111827 !important;
-  }
-
-  /* Fix autocomplete styling */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 30px white inset !important;
     -webkit-text-fill-color: #111827 !important;
-    background-color: #ffffff !important;
+  }
+
+  /* If any leftover yellow classes get applied by mistake */
+  .bg-yellow-100,
+  .bg-yellow-200,
+  .bg-yellow-300,
+  .bg-yellow-400,
+  .bg-yellow-500,
+  .bg-yellow-600,
+  .bg-yellow-700,
+  .bg-yellow-800,
+  .bg-yellow-900 {
+    background-color: white !important;
+  }
+
+  .text-yellow-500,
+  .text-yellow-400,
+  .text-yellow-600 {
+    color: #FB923C !important; /* Orange substitute */
   }
 }
 
@@ -158,19 +149,19 @@
   .perspective-1000 {
     perspective: 1000px;
   }
-  
+
   .transform-style-preserve-3d {
     transform-style: preserve-3d;
   }
-  
+
   .backface-hidden {
     backface-visibility: hidden;
   }
-  
+
   .rotate-y-180 {
     transform: rotateY(180deg);
   }
-  
+
   .animate-pulse-gentle {
     animation: pulse-gentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
