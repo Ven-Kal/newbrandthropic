@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { BlogCard } from "@/components/blog/blog-card";
 import { SmartSearch } from "@/components/ui/smart-search";
@@ -9,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Blog } from "@/types/blog";
+import { PageLayout } from "@/components/layout/page-layout";
 
 function BlogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,7 +82,7 @@ function BlogsPage() {
   ];
 
   return (
-    <>
+    <PageLayout>
       <EnhancedSEOHead 
         title="Blog - Insights & Customer Service Tips | Brandthropic"
         description="Read the latest insights about customer service, brand reviews, and consumer tips. Stay informed with our expert articles and industry updates."
@@ -206,7 +206,7 @@ function BlogsPage() {
           </div>
         </section>
       </main>
-    </>
+    </PageLayout>
   );
 }
 

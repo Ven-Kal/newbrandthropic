@@ -169,6 +169,7 @@ export type Database = {
           created_by: string | null
           escalation_contact_name: string | null
           escalation_email: string | null
+          escalation_levels: Json | null
           escalation_phone: string | null
           facebook_url: string | null
           grievance_portal_url: string | null
@@ -210,6 +211,7 @@ export type Database = {
           created_by?: string | null
           escalation_contact_name?: string | null
           escalation_email?: string | null
+          escalation_levels?: Json | null
           escalation_phone?: string | null
           facebook_url?: string | null
           grievance_portal_url?: string | null
@@ -251,6 +253,7 @@ export type Database = {
           created_by?: string | null
           escalation_contact_name?: string | null
           escalation_email?: string | null
+          escalation_levels?: Json | null
           escalation_phone?: string | null
           facebook_url?: string | null
           grievance_portal_url?: string | null

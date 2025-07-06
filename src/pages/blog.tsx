@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +10,7 @@ import { Blog } from "@/types/blog";
 import { Clock, Calendar, User, Tag } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { PageLayout } from "@/components/layout/page-layout";
 
 function BlogPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -86,7 +86,7 @@ function BlogPage() {
   ];
 
   return (
-    <>
+    <PageLayout>
       <EnhancedSEOHead 
         title={blog.meta_title || `${blog.title} | Brandthropic Blog`}
         description={blog.meta_description || blog.excerpt}
@@ -200,7 +200,7 @@ function BlogPage() {
           )}
         </div>
       </main>
-    </>
+    </PageLayout>
   );
 }
 

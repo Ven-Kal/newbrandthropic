@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { BrandCard } from "@/components/brand-card";
 import { SmartSearch } from "@/components/ui/smart-search";
@@ -10,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { Brand } from "@/types";
 import { Filter, Grid, List } from "lucide-react";
+import { PageLayout } from "@/components/layout/page-layout";
 
 function BrandsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,7 +91,7 @@ function BrandsPage() {
   ];
 
   return (
-    <>
+    <PageLayout>
       <EnhancedSEOHead 
         title="Browse Brands - Customer Service Reviews | Brandthropic"
         description="Discover top brands and read authentic customer service reviews. Find reliable companies with excellent customer support and service quality."
@@ -236,7 +236,7 @@ function BrandsPage() {
           </div>
         </section>
       </main>
-    </>
+    </PageLayout>
   );
 }
 

@@ -1,4 +1,3 @@
-
 // User types
 export type UserRole = 'consumer' | 'admin';
 
@@ -14,6 +13,15 @@ export interface User {
 
 // Brand types
 export type BrandCategory = string; // Made flexible to accept any category
+
+export interface EscalationLevel {
+  id: string;
+  title: string;
+  link?: string;
+  phone?: string;
+  email?: string;
+  note?: string;
+}
 
 export interface Brand {
   brand_id: string;
@@ -68,6 +76,8 @@ export interface Brand {
     lat?: number;
     lng?: number;
   };
+  // New escalation levels
+  escalation_levels?: EscalationLevel[];
 }
 
 // Review types

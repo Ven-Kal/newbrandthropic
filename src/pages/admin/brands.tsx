@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Search, PencilLine, Download, BookOpen } from "lucide-react";
+import { Plus, Upload, Search, PencilLine, Download, BookOpen, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/components/ui/use-toast";
@@ -19,6 +19,7 @@ import { LogoUploader } from "@/components/admin/logo-uploader";
 import { CSVImporter } from "@/components/admin/csv-importer";
 import { CSVTemplate } from "@/components/admin/csv-template";
 import { SEOGuide } from "@/components/admin/seo-guide";
+import { EscalationEditor } from "@/components/admin/escalation-editor";
 import { Brand } from "@/types";
 import {
   Table,
@@ -29,6 +30,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface EscalationLevel {
+  id: string;
+  title: string;
+  link?: string;
+  phone?: string;
+  email?: string;
+  note?: string;
+}
+
 export default function AdminBrandsPage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -37,9 +47,11 @@ export default function AdminBrandsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [escalationDialogOpen, setEscalationDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [seoGuideOpen, setSeoGuideOpen] = useState(false);
+  const [escalationLevels, setEscalationLevels] = useState<EscalationLevel[]>([]);
   
   // Fetch brands from Supabase
   const fetchBrands = async () => {
@@ -107,6 +119,47 @@ export default function AdminBrandsPage() {
         variant: "destructive"
       });
     }
+  };
+
+  // Handle escalation levels update
+  const handleEscalationUpdate = async () => {
+    if (!selectedBrand) return;
+    
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .update({ escalation_levels: escalationLevels })
+        .eq('brand_id', selectedBrand.brand_id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setBrands(brands.map(brand => 
+        brand.brand_id === selectedBrand.brand_id
+          ? { ...brand, escalation_levels: escalationLevels }
+          : brand
+      ));
+      
+      setEscalationDialogOpen(false);
+      toast({
+        title: "Escalation levels updated",
+        description: "Brand escalation levels have been updated successfully"
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "There was an error updating the escalation levels",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Open escalation editor
+  const openEscalationEditor = (brand: Brand) => {
+    setSelectedBrand(brand);
+    setEscalationLevels(Array.isArray(brand.escalation_levels) ? brand.escalation_levels : []);
+    setEscalationDialogOpen(true);
   };
   
   // Handler for CSV import success
@@ -187,13 +240,14 @@ export default function AdminBrandsPage() {
               <TableHead>Rating</TableHead>
               <TableHead>Reviews</TableHead>
               <TableHead>SEO Status</TableHead>
+              <TableHead>Escalations</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10">
+                <TableCell colSpan={7} className="text-center py-10">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
                   </div>
@@ -208,6 +262,8 @@ export default function AdminBrandsPage() {
                   brand.logo_alt,
                   brand.canonical_url
                 ].filter(Boolean).length;
+
+                const escalationCount = Array.isArray(brand.escalation_levels) ? brand.escalation_levels.length : 0;
                 
                 return (
                   <TableRow key={brand.brand_id}>
@@ -237,23 +293,42 @@ export default function AdminBrandsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedBrand(brand);
-                          setEditDialogOpen(true);
-                        }}
-                      >
-                        <PencilLine className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          escalationCount > 0 ? 'bg-green-500' : 'bg-gray-300'
+                        }`}></div>
+                        <span className="text-xs">{escalationCount} levels</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedBrand(brand);
+                            setEditDialogOpen(true);
+                          }}
+                          title="Edit Logo"
+                        >
+                          <PencilLine className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => openEscalationEditor(brand)}
+                          title="Manage Escalations"
+                        >
+                          <AlertTriangle className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
                   No brands found matching your search.
                 </TableCell>
               </TableRow>
@@ -313,6 +388,41 @@ export default function AdminBrandsPage() {
               onClick={() => setEditDialogOpen(false)}
             >
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Escalation Levels Dialog */}
+      <Dialog open={escalationDialogOpen} onOpenChange={setEscalationDialogOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Escalation Levels</DialogTitle>
+            <DialogDescription>
+              Configure escalation steps for {selectedBrand?.brand_name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <EscalationEditor
+              escalationLevels={escalationLevels}
+              onEscalationLevelsChange={setEscalationLevels}
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEscalationDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleEscalationUpdate}
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
