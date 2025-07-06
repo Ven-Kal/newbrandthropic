@@ -28,12 +28,12 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
               <img 
-                src="/logo-brand.jpeg" 
+                src="/logo-brand.png" 
                 alt="Brandthropic Logo" 
                 className="h-8 w-auto"
               />
               <span className="text-2xl font-bold text-brandblue-800">
-                
+                Brandthropic
               </span>
             </Link>
           </div>

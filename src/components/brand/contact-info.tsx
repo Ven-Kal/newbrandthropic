@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Phone, Mail, MapPin, AlertTriangle } from "lucide-react";
 import { Brand } from "@/types";
+import { EscalationDisplay } from "./escalation-display";
 
 interface ContactInfoProps {
   brand: Brand;
@@ -68,8 +69,13 @@ export function ContactInfo({ brand }: ContactInfoProps) {
         </Card>
       )}
 
-      {/* Escalation Contact */}
-      {(brand.escalation_phone || brand.escalation_email) && (
+      {/* New Escalation Levels Display */}
+      {brand.escalation_levels && Array.isArray(brand.escalation_levels) && brand.escalation_levels.length > 0 && (
+        <EscalationDisplay escalationLevels={brand.escalation_levels} />
+      )}
+
+      {/* Legacy Escalation Contact - Only show if no new escalation levels */}
+      {(!brand.escalation_levels || brand.escalation_levels.length === 0) && (brand.escalation_phone || brand.escalation_email) && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
             <CardTitle className="text-lg font-medium flex items-center text-orange-800">
