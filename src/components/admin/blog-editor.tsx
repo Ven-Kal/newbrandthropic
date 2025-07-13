@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { HtmlEditor } from "@/components/admin/html-editor";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
   const [isPublished, setIsPublished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load existing blog data when editing
   useEffect(() => {
     if (blog) {
       setTitle(blog.title);
@@ -126,7 +125,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
 
       let result;
       if (blog) {
-        // Update existing blog
         result = await supabase
           .from('blogs')
           .update(blogData)
@@ -134,7 +132,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
           .select()
           .single();
       } else {
-        // Create new blog
         result = await supabase
           .from('blogs')
           .insert([blogData])
@@ -153,7 +150,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
       
       toast.success(`Blog ${isPublished ? 'published' : 'saved as draft'} successfully!`);
       
-      // Reset form only if creating new blog
       if (!blog) {
         setTitle("");
         setSlug("");
@@ -188,7 +184,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
           <div className="space-y-4">
             <div>
               <Label htmlFor="title">Title *</Label>
@@ -225,19 +220,15 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             </div>
 
             <div>
-              <Label htmlFor="content">Content *</Label>
-              <Textarea
-                id="content"
+              <Label htmlFor="content">Content * (HTML Enabled)</Label>
+              <HtmlEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Write your blog content here..."
-                className="h-40"
-                required
+                onChange={setContent}
+                placeholder="Write your blog content here using HTML tags..."
               />
             </div>
           </div>
 
-          {/* Image Upload */}
           <div>
             <ImageUploader
               onImageUploaded={setFeaturedImageUrl}
@@ -246,7 +237,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             />
           </div>
 
-          {/* Category and Author */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="category">Category *</Label>
@@ -271,7 +261,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             </div>
           </div>
 
-          {/* Optional YouTube URL */}
           <div>
             <Label htmlFor="youtube">YouTube Video URL (Optional)</Label>
             <Input
@@ -282,7 +271,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             />
           </div>
 
-          {/* Tags */}
           <div>
             <Label>Tags</Label>
             <div className="flex gap-2 mb-2">
@@ -309,7 +297,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             </div>
           </div>
 
-          {/* SEO Settings */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">SEO Settings</h3>
             
@@ -361,7 +348,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             </div>
           </div>
 
-          {/* Publishing Options */}
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -373,7 +359,6 @@ export function BlogEditor({ blog, onSave, onCancel, onSuccess }: BlogEditorProp
             <Label htmlFor="publish">Publish immediately</Label>
           </div>
 
-          {/* Submit Buttons */}
           <div className="flex gap-4">
             {onCancel && (
               <Button 

@@ -45,24 +45,30 @@ export function BrandCard({ brand }: BrandCardProps) {
           </div>
 
           {/* Brand Name */}
-          <h3 className="font-semibold text-lg text-gray-900 text-center mb-3 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-lg text-gray-900 text-center mb-3 group-hover:text-primary transition-colors line-clamp-2">
             {brand.brand_name}
           </h3>
 
-          {/* Rating */}
-          <div className="flex items-center justify-center mb-4">
-            <Rating value={brand.rating_avg} size="sm" className="mr-2" />
-            <span className="text-sm font-medium text-gray-700">
-              {brand.rating_avg.toFixed(1)}
-            </span>
-            <span className="text-sm text-gray-500 ml-1">
-              ({brand.total_reviews})
-            </span>
-          </div>
+          {/* Rating - Only show if there are actual reviews */}
+          {brand.total_reviews > 0 ? (
+            <div className="flex items-center justify-center mb-4">
+              <Rating value={brand.rating_avg} size="sm" className="mr-2" />
+              <span className="text-sm font-medium text-gray-700">
+                {brand.rating_avg.toFixed(1)}
+              </span>
+              <span className="text-sm text-gray-500 ml-1">
+                ({brand.total_reviews} {brand.total_reviews === 1 ? 'review' : 'reviews'})
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center mb-4">
+              <span className="text-sm text-gray-500">No reviews yet</span>
+            </div>
+          )}
 
           {/* Tags */}
           <div className="flex flex-col gap-2 mt-auto">
-            <Badge variant="secondary" className="text-xs text-center">
+            <Badge variant="secondary" className="text-xs text-center capitalize">
               {brand.category}
             </Badge>
             {brand.special_tags && (

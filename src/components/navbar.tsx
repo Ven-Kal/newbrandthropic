@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Menu, X, User, LogOut, Home, Briefcase } from "lucide-react";
+import { Menu, X, User, LogOut, Home, Briefcase, Trophy } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,40 @@ import {
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentBadge, setCurrentBadge] = useState<any>(null);
   const navigate = useNavigate();
+
+  // Fetch current badge
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchCurrentBadge = async () => {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select(`
+          current_badge_id,
+          badges (
+            id,
+            name,
+            icon_unlocked_url,
+            icon_locked_url
+          )
+        `)
+        .eq('user_id', user.user_id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching current badge:', error);
+        return;
+      }
+
+      if (userData?.badges) {
+        setCurrentBadge(userData.badges);
+      }
+    };
+
+    fetchCurrentBadge();
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -33,7 +67,7 @@ export function Navbar() {
                 className="h-8 w-auto"
               />
               <span className="text-2xl font-bold text-brandblue-800">
-                
+                Brandthropic
               </span>
             </Link>
           </div>
@@ -53,9 +87,15 @@ export function Navbar() {
             </Link>
             
             {isAuthenticated && user?.role === "consumer" && (
-              <Link to="/my-reviews" className="text-sm font-medium">
-                My Reviews
-              </Link>
+              <>
+                <Link to="/my-reviews" className="text-sm font-medium">
+                  My Reviews
+                </Link>
+                <Link to="/dashboard" className="text-sm font-medium flex items-center gap-1">
+                  <Trophy className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              </>
             )}
             
             {isAuthenticated && user?.role === "admin" && (
@@ -65,20 +105,40 @@ export function Navbar() {
             )}
             
             {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <User className="h-4 w-4" />
-                    {user?.name ? `Hi, ${user.name.split(' ')[0]}` : 'Account'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-3">
+                {/* Current Badge Display */}
+                {currentBadge && (
+                  <div className="flex items-center gap-2 px-2 py-1 bg-blue-50 rounded-full">
+                    <img
+                      src={currentBadge.icon_unlocked_url}
+                      alt={currentBadge.name}
+                      className="w-6 h-6 object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = currentBadge.icon_locked_url;
+                      }}
+                    />
+                    <span className="text-xs font-medium text-blue-800">
+                      {currentBadge.name}
+                    </span>
+                  </div>
+                )}
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <User className="h-4 w-4" />
+                      {user?.name ? `Hi, ${user.name.split(' ')[0]}` : 'Account'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ) : (
               <Button asChild variant="default">
                 <Link to="/login">Sign In</Link>
@@ -107,6 +167,24 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t">
           <div className="container mx-auto px-4 py-4 space-y-4">
+            {/* Current Badge Display - Mobile */}
+            {isAuthenticated && currentBadge && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
+                <img
+                  src={currentBadge.icon_unlocked_url}
+                  alt={currentBadge.name}
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = currentBadge.icon_locked_url;
+                  }}
+                />
+                <span className="text-sm font-medium text-blue-800">
+                  Current Badge: {currentBadge.name}
+                </span>
+              </div>
+            )}
+            
             <Link
               to="/"
               className="flex items-center gap-2 py-2 text-base font-medium"
@@ -134,13 +212,23 @@ export function Navbar() {
             </Link>
             
             {isAuthenticated && user?.role === "consumer" && (
-              <Link
-                to="/my-reviews"
-                className="block py-2 text-base font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                My Reviews
-              </Link>
+              <>
+                <Link
+                  to="/my-reviews"
+                  className="block py-2 text-base font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  My Reviews
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-2 py-2 text-base font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Trophy className="h-5 w-5" />
+                  Dashboard
+                </Link>
+              </>
             )}
             
             {isAuthenticated && user?.role === "admin" && (

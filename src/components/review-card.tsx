@@ -1,64 +1,99 @@
 
-import { Rating } from "./ui/rating";
-import { Card, CardContent, CardFooter } from "./ui/card";
-import { Review } from "@/types";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Star, Calendar, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Badge } from "./ui/badge";
 
 interface ReviewCardProps {
-  review: Review;
-  showActions?: boolean;
-  onDelete?: (id: string) => void;
-  onUpdate?: () => void;
+  review: {
+    review_id: string;
+    rating: number;
+    review_text: string;
+    created_at: string;
+    status: string;
+    user_id: string;
+    users?: {
+      name: string;
+    } | null;
+    brands?: {
+      brand_name: string;
+      logo_url: string;
+    } | null;
+  };
+  showBrand?: boolean;
 }
 
-export function ReviewCard({ review, showActions = false, onDelete, onUpdate }: ReviewCardProps) {
-  const formattedDate = formatDistanceToNow(new Date(review.created_at), { addSuffix: true });
-  
+export function ReviewCard({ review, showBrand = false }: ReviewCardProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const userName = review.users?.name || 'Anonymous User';
+  const timeAgo = formatDistanceToNow(new Date(review.created_at), { addSuffix: true });
+
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <Rating value={review.rating} size="md" />
-              <Badge variant="outline" className="text-xs">
-                {review.category}
-              </Badge>
+    <Card className="mb-4">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-brandblue-100 flex items-center justify-center">
+              <User className="w-4 h-4 text-brandblue-600" />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {formattedDate}
-            </p>
+            <div>
+              <p className="font-medium text-gray-900">{userName}</p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Calendar className="w-4 h-4" />
+                {timeAgo}
+              </div>
+            </div>
           </div>
-          
-          {review.status === "pending" && (
-            <Badge variant="secondary">Pending</Badge>
-          )}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-4 h-4 ${
+                    i < review.rating
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
+            </div>
+            <Badge className={`text-xs ${getStatusColor(review.status)}`}>
+              {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
+            </Badge>
+          </div>
         </div>
         
-        <p className="mt-4 text-sm">{review.review_text}</p>
-        
-        {review.screenshot_url && (
-          <div className="mt-4">
-            <img 
-              src={review.screenshot_url} 
-              alt="Review screenshot" 
-              className="max-h-48 rounded border"
+        {showBrand && review.brands && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+            <img
+              src={review.brands.logo_url}
+              alt={review.brands.brand_name}
+              className="w-6 h-6 object-contain"
             />
+            <span className="text-sm font-medium text-gray-700">
+              {review.brands.brand_name}
+            </span>
           </div>
         )}
-      </CardContent>
+      </CardHeader>
       
-      {showActions && (
-        <CardFooter className="flex justify-end gap-2 pt-2 pb-4">
-          <button
-            onClick={() => onDelete?.(review.review_id)}
-            className="text-sm text-destructive hover:underline"
-          >
-            Delete
-          </button>
-        </CardFooter>
-      )}
+      <CardContent>
+        <p className="text-gray-700 leading-relaxed">
+          {review.review_text}
+        </p>
+      </CardContent>
     </Card>
   );
 }
