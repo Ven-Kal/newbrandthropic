@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -189,12 +190,6 @@ export default function BrandPage() {
     }, 100);
   };
 
-  // Handle rating updates by refetching brand data
-  const handleRatingUpdate = () => {
-    console.log("Rating updated, refetching brand data...");
-    refetch();
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -272,8 +267,12 @@ export default function BrandPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-lg font-medium text-gray-900">{brand.rating_avg.toFixed(1)}</span>
-                    <span className="text-gray-600">({brand.total_reviews} reviews)</span>
+                    <span className="text-lg font-medium text-gray-900">
+                      {brand.total_reviews > 0 ? brand.rating_avg.toFixed(1) : 'No reviews yet'}
+                    </span>
+                    <span className="text-gray-600">
+                      ({brand.total_reviews} {brand.total_reviews === 1 ? 'review' : 'reviews'})
+                    </span>
                   </div>
                 </div>
               </div>
@@ -403,7 +402,7 @@ export default function BrandPage() {
           
           {/* Reviews Section */}
           <div className="mb-8">
-            <BrandReviews brand={brand} onRatingUpdate={handleRatingUpdate} />
+            <BrandReviews brand={brand} />
           </div>
           
           {/* Additional Contact Information */}

@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { awardPoints } from "@/lib/points";
 
 export default function WriteReviewPage() {
   const { brandId } = useParams<{ brandId: string }>();
@@ -110,7 +111,7 @@ export default function WriteReviewPage() {
       console.log("Submitting review with brandId:", brandId);
       
       // Insert review into the database with approved status
-      const { data, error } = await supabase.from('reviews').insert({
+      const { data: reviewData, error } = await supabase.from('reviews').insert({
         user_id: user!.user_id,
         brand_id: brandId,
         rating,
@@ -119,7 +120,7 @@ export default function WriteReviewPage() {
         status: "approved", // Direct approval - no admin moderation needed
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }).select();
+      }).select().single();
       
       if (error) {
         console.error("Review submission error:", error);
@@ -128,6 +129,12 @@ export default function WriteReviewPage() {
         }
         throw new Error(`Review submission failed: ${error.message}`);
       }
+      
+      // Award points for the review (this triggers the database function)
+      await awardPoints(user!.user_id, 'REVIEW', reviewData.review_id);
+      
+      // Award points for the rating separately
+      await awardPoints(user!.user_id, 'RATING', brandId);
       
       // Update brand rating average and total reviews
       if (brand) {

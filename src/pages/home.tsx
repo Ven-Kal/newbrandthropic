@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { SmartSearch } from "@/components/ui/smart-search";
 import { Brand } from "@/types";
@@ -14,10 +15,16 @@ export default function HomePage() {
   const navigate = useNavigate();
   const brandsRef = useRef<HTMLElement>(null);
 
-  // Fetch brands from Supabase
+  // Fetch brands from Supabase - only get actual ratings from database
   const { data: brands = [], isLoading } = useQuery({
     queryKey: ['all-brands'],
     queryFn: async () => {
+      // First update brand ratings to ensure accuracy
+      const { error: updateError } = await supabase.rpc('update_brand_ratings');
+      if (updateError) {
+        console.warn('Could not update brand ratings:', updateError);
+      }
+
       const { data, error } = await supabase
         .from('brands')
         .select('*')
@@ -38,7 +45,8 @@ export default function HomePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('brand_categories')
-        .select('*');
+        .select('*')
+        .order('category');
         
       if (error) {
         console.error('Error fetching categories:', error);
@@ -58,9 +66,16 @@ export default function HomePage() {
     return matchesSearch && matchesCategory;
   });
 
-  // Get popular brands (highest rated)
+  // Get popular brands (highest rated with actual reviews)
   const popularBrands = [...brands]
-    .sort((a, b) => b.rating_avg - a.rating_avg)
+    .filter(brand => brand.total_reviews > 0) // Only brands with actual reviews
+    .sort((a, b) => {
+      // Sort by rating average first, then by total reviews
+      if (b.rating_avg !== a.rating_avg) {
+        return b.rating_avg - a.rating_avg;
+      }
+      return b.total_reviews - a.total_reviews;
+    })
     .slice(0, 4);
 
   const handleCategorySelect = (category: string) => {
@@ -100,7 +115,7 @@ export default function HomePage() {
                 Brandthropic
               </h1>
               <p className="text-xl md:text-2xl opacity-90 animate-fade-in font-light italic">
-                
+                Find Trusted Brands & Real Customer Reviews
               </p>
             </div>
             
@@ -108,7 +123,7 @@ export default function HomePage() {
               Your Super-app for Customer Service
             </h2>
             <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto animate-fade-in">
-              It has everything that you need about Customer Service
+              Discover authentic reviews, compare brands, and make informed decisions with real customer experiences.
             </p>
             
             <div className="max-w-2xl mx-auto animate-bounce-in">
@@ -119,6 +134,24 @@ export default function HomePage() {
                 onResultSelect={handleSearchResultSelect}
                 className="bg-white rounded-xl shadow-xl"
               />
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto mt-12">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{brands.length}+</div>
+                <div className="text-gray-300">Trusted Brands</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">
+                  {brands.reduce((sum, brand) => sum + brand.total_reviews, 0)}+
+                </div>
+                <div className="text-gray-300">Real Customer Reviews</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{categories.length}+</div>
+                <div className="text-gray-300">Categories</div>
+              </div>
             </div>
           </div>
         </div>
@@ -134,7 +167,7 @@ export default function HomePage() {
             Browse by Category
           </h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
             <button
               onClick={() => handleCategorySelect("all")}
               className={`group p-6 rounded-xl text-center transition-all duration-300 transform hover:scale-105 ${
@@ -174,7 +207,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Popular Brands Section */}
+      {/* Popular Brands Section - Only brands with actual reviews */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">
@@ -188,7 +221,7 @@ export default function HomePage() {
             </div>
           ) : popularBrands.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-lg text-gray-500">No brands found.</p>
+              <p className="text-lg text-gray-500">No brands with reviews found yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
