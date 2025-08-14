@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -10,7 +9,9 @@ import {
   Users, 
   FileText, 
   Search,
-  Megaphone 
+  Megaphone,
+  BarChart3,
+  BookOpen
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -32,12 +33,14 @@ export default function AdminLayout() {
 
   const navItems = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/admin/brands', icon: Package, label: 'Brands' },
     { path: '/admin/reviews', icon: MessageSquare, label: 'Reviews' },
     { path: '/admin/users', icon: Users, label: 'Users' },
     { path: '/admin/blogs', icon: FileText, label: 'Blogs' },
     { path: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
     { path: '/admin/seo', icon: Search, label: 'SEO' },
+    { path: '/admin/guide', icon: BookOpen, label: 'Platform Guide' },
   ];
 
   return (
@@ -58,7 +61,7 @@ export default function AdminLayout() {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-brandblue-50 text-brandblue-700 border-brandblue-200'
+                      ? 'bg-primary/10 text-primary border-primary/30'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >

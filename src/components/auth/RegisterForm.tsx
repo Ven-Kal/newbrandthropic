@@ -110,7 +110,7 @@ export default function RegisterForm({
         
         <p className="text-sm text-center text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="text-brandblue-600 hover:underline">
+          <Link to="/login" className="text-primary hover:underline">
             Sign In
           </Link>
         </p>
