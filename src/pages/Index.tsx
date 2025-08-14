@@ -179,13 +179,13 @@ export default function Index() {
       )}
 
       {/* Hero Section with Global Search */}
-      <section className="bg-gradient-to-br from-brandblue-50 to-brandblue-100 py-20">
+      <section className="bg-gradient-to-br from-primary/5 to-primary/10 py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-brandblue-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-primary mb-6">
             Find Trusted Brands &<br />
             Real Customer Reviews
           </h1>
-          <p className="text-xl text-brandblue-700 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-primary/80 mb-8 max-w-2xl mx-auto">
             Discover authentic reviews, compare brands, and make informed decisions.
             Join our community and earn badges on your Tropic Trail journey!
           </p>
@@ -213,18 +213,18 @@ export default function Index() {
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-brandblue-900">{featuredBrands.length}+</div>
-              <div className="text-brandblue-700">Trusted Brands</div>
+              <div className="text-3xl font-bold text-primary">{featuredBrands.length}+</div>
+              <div className="text-primary/70">Trusted Brands</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-brandblue-900">
+              <div className="text-3xl font-bold text-primary">
                 {featuredBrands.reduce((sum, brand) => sum + brand.total_reviews, 0)}+
               </div>
-              <div className="text-brandblue-700">Customer Reviews</div>
+              <div className="text-primary/70">Customer Reviews</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-brandblue-900">{topCategories.length}+</div>
-              <div className="text-brandblue-700">Categories</div>
+              <div className="text-3xl font-bold text-primary">{topCategories.length}+</div>
+              <div className="text-primary/70">Categories</div>
             </div>
           </div>
         </div>
@@ -253,8 +253,8 @@ export default function Index() {
               >
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 bg-brandblue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl font-bold text-brandblue-600">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl font-bold text-primary">
                         {category.category.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -312,7 +312,7 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-brandblue-600 text-white">
+      <section className="py-16 bg-primary text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Join the BrandTropic Community</h2>
           <p className="text-xl mb-8 opacity-90">
@@ -328,7 +328,7 @@ export default function Index() {
                 <Link to="/brands">Write Your First Review</Link>
               </Button>
             )}
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-brandblue-600">
+            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
               <Link to="/brands">Explore Brands</Link>
             </Button>
           </div>
@@ -347,7 +347,7 @@ export default function Index() {
                   className="w-20 h-20 mx-auto"
                 />
               </div>
-              <h3 className="text-2xl font-bold text-brandblue-900 mb-2">
+              <h3 className="text-2xl font-bold text-primary mb-2">
                 🎉 Badge Earned!
               </h3>
               <h4 className="text-lg font-semibold mb-2">{celebrationBadge.name}</h4>

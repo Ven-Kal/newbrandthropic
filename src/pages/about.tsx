@@ -1,15 +1,12 @@
 
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Target, Lightbulb, TrendingUp } from "lucide-react";
+import { PageLayout } from "@/components/layout/page-layout";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="container mx-auto px-4 py-12">
+    <PageLayout>
+      <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">About Brandthropic</h1>
@@ -141,9 +138,7 @@ export default function AboutPage() {
             </div>
           </CardContent>
         </Card>
-      </main>
-      
-      <Footer />
-    </div>
+      </div>
+    </PageLayout>
   );
 }

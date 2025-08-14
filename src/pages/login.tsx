@@ -345,7 +345,7 @@ export default function LoginPage() {
                 
                 <p className="text-sm text-center text-muted-foreground">
                   Don't have an account?{" "}
-                  <Link to="/register" className="text-brandblue-600 hover:underline">
+                  <Link to="/register" className="text-primary hover:underline">
                     Register
                   </Link>
                 </p>
@@ -429,7 +429,7 @@ export default function LoginPage() {
                 
                 <p className="text-sm text-center text-muted-foreground">
                   Don't have an account?{" "}
-                  <Link to="/register" className="text-brandblue-600 hover:underline">
+                  <Link to="/register" className="text-primary hover:underline">
                     Register
                   </Link>
                 </p>

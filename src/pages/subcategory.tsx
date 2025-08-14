@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BrandCard } from "@/components/brand-card";
 import { SearchInput } from "@/components/ui/search-input";
+import { PageLayout } from "@/components/layout/page-layout";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 
@@ -111,7 +112,8 @@ export default function SubcategoryPage() {
   const featureCards = getFeatureCards();
 
   return (
-    <main className="min-h-screen bg-white">
+    <PageLayout>
+      <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-white">
         <div className="container mx-auto px-4 py-16">
@@ -248,6 +250,7 @@ export default function SubcategoryPage() {
           )}
         </div>
       </section>
-    </main>
+      </div>
+    </PageLayout>
   );
 }

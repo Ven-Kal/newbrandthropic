@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Brand } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { Star, Edit, Facebook, Twitter, Instagram, Linkedin, Phone, Mail, Globe, AlertTriangle, Grid, List } from "lucide-react";
+import { PageLayout } from "@/components/layout/page-layout";
 
 export default function BrandPage() {
   const { brandId } = useParams<{ brandId: string }>();
@@ -224,7 +225,7 @@ export default function BrandPage() {
   ];
 
   return (
-    <>
+    <PageLayout showNavbar={true} showFooter={true}>
       <EnhancedSEOHead 
         title={brand.meta_title || `${brand.brand_name} - Customer Service Contact Information`}
         description={brand.meta_description || `Find customer service contact information for ${brand.brand_name}. Get support numbers, complaint procedures, and escalation details.`}
@@ -233,7 +234,7 @@ export default function BrandPage() {
         breadcrumbs={breadcrumbs}
       />
       
-      <main className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <Breadcrumbs items={breadcrumbs} />
           
@@ -468,7 +469,7 @@ export default function BrandPage() {
             />
           </section>
         </div>
-      </main>
-    </>
+      </div>
+    </PageLayout>
   );
 }

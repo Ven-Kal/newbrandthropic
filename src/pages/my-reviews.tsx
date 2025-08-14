@@ -1,128 +1,211 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { ReviewCard } from "@/components/review-card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { mockReviews } from "@/data/mockData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Star, Calendar, Clock, ExternalLink } from "lucide-react";
+import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+
+interface Review {
+  review_id: string;
+  brand_id: string;
+  rating: number;
+  category: string;
+  review_text: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  brands: {
+    brand_name: string;
+    logo_url: string;
+  };
+}
 
 export default function MyReviewsPage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
-  
-  // Fetch user's reviews
-  const { data: reviews, isLoading } = useQuery({
-    queryKey: ['myReviews', user?.user_id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      // Try to get reviews from Supabase
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    fetchReviews();
+  }, [isAuthenticated, user, navigate]);
+
+  const fetchReviews = async () => {
+    if (!user) return;
+
+    try {
       const { data, error } = await supabase
         .from('reviews')
-        .select('*, brands(brand_name, logo_url)')
+        .select(`
+          review_id,
+          brand_id,
+          rating,
+          category,
+          review_text,
+          status,
+          created_at,
+          brands!inner (
+            brand_name,
+            logo_url
+          )
+        `)
         .eq('user_id', user.user_id)
         .order('created_at', { ascending: false });
-      
-      if (error || !data) {
-        // Fallback to mock data for development
-        return mockReviews.filter(review => review.user_id === user.user_id);
+
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        return;
       }
-      
-      return data;
-    },
-    enabled: isAuthenticated,
-  });
-  
-  // Filter reviews by status
-  const filteredReviews = activeTab === "all"
-    ? reviews
-    : reviews?.filter(review => review.status === activeTab);
-  
-  // If user is not authenticated
+
+      // Transform the data to match our interface
+      const transformedReviews = data?.map((review: any) => ({
+        review_id: review.review_id,
+        brand_id: review.brand_id,
+        rating: review.rating,
+        category: review.category,
+        review_text: review.review_text,
+        status: review.status,
+        created_at: review.created_at,
+        brands: Array.isArray(review.brands) ? review.brands[0] : review.brands
+      })) || [];
+
+      setReviews(transformedReviews);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center max-w-md">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h1 className="text-2xl font-bold mb-4">Login Required</h1>
-          <p className="mb-6 text-muted-foreground">
-            You need to be logged in to view your reviews
-          </p>
-          <Button onClick={() => navigate("/login")}>Sign In</Button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">My Reviews</h1>
-      
-      <Tabs
-        defaultValue="all"
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "all" | "pending" | "approved" | "rejected")}
-        className="mb-6"
-      >
-        <TabsList>
-          <TabsTrigger value="all">All Reviews</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      
-      {isLoading ? (
-        <div className="text-center py-12">
-          <p>Loading your reviews...</p>
-        </div>
-      ) : filteredReviews && filteredReviews.length > 0 ? (
-        <div className="space-y-6">
-          {filteredReviews.map((review) => (
-            <div key={review.review_id} className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={review.brands?.logo_url || "/placeholder.svg"}
-                    alt={review.brands?.brand_name || "Brand"}
-                    className="w-10 h-10 object-contain"
-                  />
-                  <span className="font-medium">{review.brands?.brand_name}</span>
-                </div>
-                
-                <div className="px-2 py-1 text-xs rounded-full font-medium 
-                  ${review.status === 'approved' ? 'bg-green-100 text-green-800' : 
-                    review.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                    'bg-yellow-100 text-yellow-800'}">
-                  {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
-                </div>
-              </div>
-              
-              <ReviewCard review={review} />
-              
-              {review.status === 'rejected' && (
-                <div className="mt-4 p-3 bg-red-50 text-red-800 rounded-md text-sm">
-                  <p className="font-medium">Rejection reason:</p>
-                  <p>This review violates our community guidelines.</p>
-                </div>
-              )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">My Reviews</h1>
+              <p className="text-gray-600 mt-2">
+                Track and manage all your brand reviews
+              </p>
             </div>
-          ))}
+            <Button 
+              onClick={() => navigate('/brands')}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Write New Review
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <p className="text-lg text-gray-500 mt-4">Loading your reviews...</p>
+            </div>
+          ) : reviews.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <div className="max-w-md mx-auto">
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Star className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No Reviews Yet</h3>
+                  <p className="text-gray-500 mb-6">
+                    Start sharing your experiences with brands and help other consumers make informed decisions.
+                  </p>
+                  <Button onClick={() => navigate('/brands')}>
+                    Write Your First Review
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {reviews.map((review) => (
+                <Card key={review.review_id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={review.brands.logo_url}
+                          alt={review.brands.brand_name}
+                          className="w-12 h-12 rounded-lg object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.svg';
+                          }}
+                        />
+                        <div>
+                          <CardTitle className="text-lg">{review.brands.brand_name}</CardTitle>
+                          <div className="flex items-center gap-4 mt-1">
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                              <span className="text-sm font-medium ml-1">
+                                {review.rating}/5
+                              </span>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">
+                              {review.category}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Badge className={`${getStatusColor(review.status)} text-xs`}>
+                        {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 mb-4 leading-relaxed">
+                      {review.review_text}
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {format(new Date(review.created_at), 'MMM dd, yyyy')}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {format(new Date(review.created_at), 'HH:mm')}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="text-center py-12 bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-xl font-semibold mb-2">No reviews found</h2>
-          <p className="text-muted-foreground mb-6">
-            You haven't submitted any {activeTab !== "all" ? activeTab : ""} reviews yet.
-          </p>
-          <Button asChild>
-            <a href="/">Explore Brands</a>
-          </Button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

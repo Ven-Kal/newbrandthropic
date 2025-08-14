@@ -1,368 +1,330 @@
 
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Star } from "lucide-react";
-import { mockBrands } from "@/data/mockData";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { awardPoints } from "@/lib/points";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Star, Upload, X } from "lucide-react";
+import { toast } from "sonner";
+import { PageLayout } from "@/components/layout/page-layout";
+
+interface Brand {
+  brand_id: string;
+  brand_name: string;
+  logo_url: string;
+  category: string;
+}
 
 export default function WriteReviewPage() {
   const { brandId } = useParams<{ brandId: string }>();
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  // Form states
-  const [rating, setRating] = useState<number>(0);
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  
-  // Check if user has already reviewed this brand
-  const { data: existingReview, isLoading: isCheckingReview } = useQuery({
-    queryKey: ['user-review', brandId, user?.user_id],
-    queryFn: async () => {
-      if (!brandId || !user?.user_id) return null;
-      
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('brand_id', brandId)
-        .eq('user_id', user.user_id)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
-        console.error('Error checking existing review:', error);
-      }
-      
-      return data;
-    },
-    enabled: !!brandId && !!user?.user_id && isAuthenticated,
-  });
-  
-  // Fetch brand details
-  const { data: brand, isLoading: isBrandLoading } = useQuery({
-    queryKey: ['brand', brandId],
-    queryFn: async () => {
-      if (!brandId) return null;
-      
-      console.log("Fetching brand with ID:", brandId);
-      
-      // Try to get brand from Supabase
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (brandId) {
+      fetchBrand();
+    }
+  }, [brandId, isAuthenticated, navigate]);
+
+  const fetchBrand = async () => {
+    try {
       const { data, error } = await supabase
         .from('brands')
-        .select('*')
+        .select('brand_id, brand_name, logo_url, category')
         .eq('brand_id', brandId)
         .single();
-      
+
       if (error) {
-        console.error("Error fetching brand:", error);
-        // Fallback to mock data for development
-        const mockBrand = mockBrands.find((b) => b.brand_id === brandId);
-        console.log("Fallback to mock brand:", mockBrand);
-        return mockBrand;
+        console.error('Error fetching brand:', error);
+        toast.error('Brand not found');
+        navigate('/brands');
+        return;
       }
-      
-      console.log("Brand data from Supabase:", data);
-      return data;
-    },
-    enabled: !!brandId,
-  });
-  
-  // Handle rating change
-  const handleRatingChange = (value: number) => {
-    setRating(value);
-  };
-  
-  // Submit review
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    
-    // Validation
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-    
-    if (!rating) {
-      setError("Please select a rating");
-      return;
-    }
-    
-    // Submit the review
-    setIsSubmitting(true);
-    
-    try {
-      console.log("Submitting review with brandId:", brandId);
-      
-      // Insert review into the database with approved status
-      const { data: reviewData, error } = await supabase.from('reviews').insert({
-        user_id: user!.user_id,
-        brand_id: brandId,
-        rating,
-        category: "customer service", // Use a valid category that matches the constraint
-        review_text: reviewText || `${rating} star rating`, // Default text if no review provided
-        status: "approved", // Direct approval - no admin moderation needed
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }).select().single();
-      
-      if (error) {
-        console.error("Review submission error:", error);
-        if (error.code === '23505') { // Unique constraint violation
-          throw new Error("You have already reviewed this brand. Each user can only submit one review per brand.");
-        }
-        throw new Error(`Review submission failed: ${error.message}`);
-      }
-      
-      // Award points for the review (this triggers the database function)
-      await awardPoints(user!.user_id, 'REVIEW', reviewData.review_id);
-      
-      // Award points for the rating separately
-      await awardPoints(user!.user_id, 'RATING', brandId);
-      
-      // Update brand rating average and total reviews
-      if (brand) {
-        const newTotalReviews = (brand.total_reviews || 0) + 1;
-        const newAvgRating = ((brand.rating_avg || 0) * (newTotalReviews - 1) + rating) / newTotalReviews;
-        
-        const { error: brandError } = await supabase
-          .from('brands')
-          .update({
-            rating_avg: newAvgRating,
-            total_reviews: newTotalReviews,
-            updated_at: new Date().toISOString()
-          })
-          .eq('brand_id', brandId);
-          
-        if (brandError) {
-          console.error('Failed to update brand rating:', brandError);
-        }
-      }
-      
-      // Show success toast
-      toast({
-        title: "Review submitted successfully",
-        description: "Your review is now live and visible to everyone.",
-      });
-      
-      // Navigate back to the brand page
-      navigate(`/brand/${brandId}`);
-    } catch (err: any) {
-      setError(err.message || "Failed to submit review. Please try again.");
-      toast({
-        title: "Error",
-        description: err.message || "Failed to submit review. Please try again.",
-        variant: "destructive",
-      });
+
+      setBrand(data);
+    } catch (error) {
+      console.error('Error fetching brand:', error);
+      toast.error('Failed to load brand information');
+      navigate('/brands');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  // If brand not found
-  if (isBrandLoading || isCheckingReview) {
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshot(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const removeScreenshot = () => {
+    setScreenshot(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user || !brand) return;
+
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+
+    if (!reviewText.trim()) {
+      toast.error('Please write your review');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      let screenshotUrl = null;
+
+      // Upload screenshot if provided
+      if (screenshot) {
+        const fileName = `${Date.now()}-${screenshot.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('review-screenshots')
+          .upload(fileName, screenshot);
+
+        if (uploadError) {
+          console.error('Error uploading screenshot:', uploadError);
+          toast.error('Failed to upload screenshot');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('review-screenshots')
+          .getPublicUrl(fileName);
+
+        screenshotUrl = publicUrl;
+      }
+
+      // Create review
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: user.user_id,
+          brand_id: brand.brand_id,
+          rating,
+          category: brand.category,
+          review_text: reviewText.trim(),
+          screenshot_url: screenshotUrl,
+          status: 'pending'
+        });
+
+      if (reviewError) {
+        console.error('Error creating review:', reviewError);
+        toast.error('Failed to submit review');
+        return;
+      }
+
+      toast.success('Review submitted successfully! It will be reviewed before being published.');
+      navigate('/my-reviews');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Loading...</h1>
-      </div>
+      <PageLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="text-lg text-gray-500 mt-4">Loading brand information...</p>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 
   if (!brand) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Brand not found</h1>
-        <p className="mb-6">The brand you're looking for doesn't exist or has been removed.</p>
-        <Button asChild>
-          <a href="/">Return to Home</a>
-        </Button>
-      </div>
-    );
-  }
-
-  // If user is not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center max-w-md">
-        <Card>
-          <CardHeader>
-            <CardTitle>Login Required</CardTitle>
-            <CardDescription>
-              You need to be logged in to write a review
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex justify-center">
-            <Button 
-              onClick={() => navigate("/login")}
-              className="w-full"
-            >
-              Sign In
+      <PageLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Brand not found</h1>
+            <p className="text-gray-600 mb-4">The brand you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate('/brands')}>
+              Browse Brands
             </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
-  // If user has already reviewed this brand
-  if (existingReview) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center max-w-md">
-        <Card>
-          <CardHeader>
-            <CardTitle>Review Already Submitted</CardTitle>
-            <CardDescription>
-              You have already reviewed {brand?.brand_name}. Each user can only submit one review per brand.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Your rating:</p>
-              <div className="flex justify-center gap-1 mb-4">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <Star
-                    key={value}
-                    className={`h-6 w-6 ${
-                      value <= existingReview.rating
-                        ? "text-orange-400 fill-orange-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              {existingReview.review_text && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Your review:</p>
-                  <p className="text-sm bg-gray-50 p-3 rounded border">
-                    {existingReview.review_text}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button 
-              onClick={() => navigate(`/brand/${brandId}`)}
-              className="w-full"
-            >
-              Back to Brand Page
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+          </div>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Rate & Review</CardTitle>
-          <CardDescription>
-            Share your rating and experience with {brand?.brand_name}
-          </CardDescription>
-        </CardHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            {/* Brand Info */}
-            <div className="flex items-center gap-4">
-              <img
-                src={brand?.logo_url}
-                alt={brand?.brand_name}
-                className="w-16 h-16 object-contain"
-              />
-              <div>
-                <h3 className="font-medium">{brand?.brand_name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {brand?.category}
-                </p>
-              </div>
+    <PageLayout>
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Write a Review</h1>
+              <p className="text-gray-600">Share your experience with {brand.brand_name}</p>
             </div>
-            
-            {/* Rating */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Rating *</label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => handleRatingChange(value)}
-                    onMouseEnter={() => setHoverRating(value)}
-                    onMouseLeave={() => setHoverRating(null)}
-                    className="focus:outline-none"
-                  >
-                    <Star
-                      className={`h-8 w-8 ${
-                        (hoverRating !== null
-                          ? value <= hoverRating
-                          : value <= rating)
-                          ? "text-orange-400 fill-orange-400"
-                          : "text-gray-300"
-                      }`}
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={brand.logo_url}
+                    alt={brand.brand_name}
+                    className="w-16 h-16 rounded-lg object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
+                  />
+                  <div>
+                    <CardTitle className="text-xl">{brand.brand_name}</CardTitle>
+                    <p className="text-gray-600">{brand.category}</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <Label className="text-base font-medium">Rating *</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          className="p-1 hover:scale-110 transition-transform"
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                        >
+                          <Star
+                            className={`w-8 h-8 ${
+                              star <= (hoverRating || rating)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                      {rating > 0 && (
+                        <span className="text-sm text-gray-600 ml-2">
+                          {rating} out of 5 stars
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="review-text" className="text-base font-medium">
+                      Your Review *
+                    </Label>
+                    <Textarea
+                      id="review-text"
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      placeholder="Share your experience with this brand's customer service..."
+                      className="mt-2 min-h-[120px]"
+                      required
                     />
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Review Text */}
-            <div className="space-y-2">
-              <label htmlFor="reviewText" className="text-sm font-medium">
-                Your Review (Optional)
-              </label>
-              <Textarea
-                id="reviewText"
-                placeholder="Write about your experience (optional)..."
-                rows={4}
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                You can submit just a rating or add a detailed review
-              </p>
-            </div>
-            
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
-          </CardContent>
-          
-          <CardFooter className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate(`/brand/${brandId}`)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || !rating}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Rating"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-base font-medium">
+                      Screenshot (Optional)
+                    </Label>
+                    <p className="text-sm text-gray-600 mt-1 mb-3">
+                      Upload a screenshot to support your review
+                    </p>
+                    
+                    {previewUrl ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={previewUrl}
+                          alt="Screenshot preview"
+                          className="max-w-full h-48 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeScreenshot}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-2">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleScreenshotChange}
+                          className="mt-2"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate('/brands')}
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={submitting || rating === 0 || !reviewText.trim()}
+                    >
+                      {submitting ? 'Submitting...' : 'Submit Review'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </PageLayout>
   );
 }
