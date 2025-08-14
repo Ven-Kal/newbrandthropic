@@ -57,41 +57,51 @@ export function Navbar() {
 
   return (
     <header className="bg-white border-b sticky top-0 z-50">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-2 sm:px-4">
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link to="/" className="flex items-center gap-1 sm:gap-2">
               <img 
                 src="/logo-brand.png" 
                 alt="Brandthropic Logo" 
-                className="h-8 w-auto"
+                className="h-8 sm:h-10 w-auto object-contain"
+                loading="eager"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  console.log('Logo failed to load from /logo-brand.png, trying fallback');
+                  target.src = '/logo-favi.png';
+                  target.onerror = () => {
+                    console.log('Fallback logo also failed, hiding image');
+                    target.style.display = 'none';
+                  };
+                }}
               />
-              <span className="text-2xl font-bold text-brandblue-800">
+              <span className="text-lg sm:text-2xl font-bold text-primary truncate">
                 Brandthropic
               </span>
             </Link>
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-sm font-medium flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+            <Link to="/" className="text-sm font-medium flex items-center gap-1 hover:text-primary transition-colors">
               <Home className="h-4 w-4" />
               Home
             </Link>
-            <Link to="/brands" className="text-sm font-medium flex items-center gap-1">
+            <Link to="/brands" className="text-sm font-medium flex items-center gap-1 hover:text-primary transition-colors">
               <Briefcase className="h-4 w-4" />
               Brands
             </Link>
-            <Link to="/about" className="text-sm font-medium">
+            <Link to="/about" className="text-sm font-medium hover:text-primary transition-colors">
               About Us
             </Link>
             
             {isAuthenticated && user?.role === "consumer" && (
               <>
-                <Link to="/my-reviews" className="text-sm font-medium">
+                <Link to="/my-reviews" className="text-sm font-medium hover:text-primary transition-colors">
                   My Reviews
                 </Link>
-                <Link to="/dashboard" className="text-sm font-medium flex items-center gap-1">
+                <Link to="/dashboard" className="text-sm font-medium flex items-center gap-1 hover:text-primary transition-colors">
                   <Trophy className="h-4 w-4" />
                   Dashboard
                 </Link>
@@ -99,7 +109,7 @@ export function Navbar() {
             )}
             
             {isAuthenticated && user?.role === "admin" && (
-              <Link to="/admin" className="text-sm font-medium">
+              <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
                 Admin Dashboard
               </Link>
             )}
@@ -165,8 +175,8 @@ export function Navbar() {
 
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t">
-          <div className="container mx-auto px-4 py-4 space-y-4">
+        <div className="md:hidden border-t bg-white">
+          <div className="container mx-auto px-2 sm:px-4 py-4 space-y-4">
             {/* Current Badge Display - Mobile */}
             {isAuthenticated && currentBadge && (
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">

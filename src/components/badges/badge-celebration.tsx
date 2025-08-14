@@ -68,7 +68,7 @@ export function BadgeCelebration({ badge, isOpen, onClose }: BadgeCelebrationPro
       <Card className="w-full max-w-md mx-4 animate-scale-in">
         <CardContent className="p-6">
           <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-bold text-brandblue-800">Badge Earned! 🎉</h2>
+            <h2 className="text-xl font-bold text-primary">Badge Earned! 🎉</h2>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>

@@ -119,7 +119,7 @@ export function BrandReviews({ brand }: BrandReviewsProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brandblue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
@@ -151,7 +151,7 @@ export function BrandReviews({ brand }: BrandReviewsProps) {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Overall Rating */}
               <div className="text-center">
-                <div className="text-4xl font-bold text-brandblue-600 mb-2">
+                <div className="text-4xl font-bold text-primary mb-2">
                   {actualRatingAvg.toFixed(1)}
                 </div>
                 <div className="flex items-center justify-center gap-1 mb-2">
