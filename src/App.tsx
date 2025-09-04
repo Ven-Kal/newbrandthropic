@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/home';
@@ -24,6 +23,10 @@ import ForConsumersPage from './pages/for-consumers';
 import UserProfilePage from './pages/user-profile';
 import ResetPasswordPage from './pages/reset-password';
 import AdminGuidePage from './pages/admin/guide';
+import FAQPage from './pages/faq';
+import AdminFAQPage from './pages/admin/faq';
+import BlogsPage from './pages/blogs';
+import BlogPage from './pages/blog';
 
 function App() {
   return (
@@ -39,6 +42,9 @@ function App() {
         <Route path="/user-profile/:userId" element={<UserProfilePage />} />
         <Route path="/my-reviews" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/blog" element={<BlogsPage />} />
+        <Route path="/blog/:slug" element={<BlogPage />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -54,6 +60,7 @@ function App() {
           <Route path="seo" element={<AdminSEOPage />} />
           <Route path="analytics" element={<AdminAnalyticsPage />} />
           <Route path="guide" element={<AdminGuidePage />} />
+          <Route path="faq" element={<AdminFAQPage />} />
         </Route>
       </Routes>
     </Router>

@@ -295,7 +295,7 @@ export default function Index() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="font-medium">{brand.rating_avg.toFixed(1)}</span>
+                      <span className="font-medium">{Number(brand.rating_avg || 0).toFixed(1)}</span>
                       <span className="text-gray-500 text-sm">({brand.total_reviews} reviews)</span>
                     </div>
                     <Button asChild size="sm">

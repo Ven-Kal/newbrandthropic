@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -236,6 +236,51 @@ export type Database = {
           },
         ]
       }
+      brand_relationships: {
+        Row: {
+          brand_id: string
+          created_at: string
+          description: string | null
+          id: string
+          related_brand_id: string
+          relationship_type: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          related_brand_id: string
+          relationship_type: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          related_brand_id?: string
+          relationship_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_relationships_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["brand_id"]
+          },
+          {
+            foreignKeyName: "brand_relationships_related_brand_id_fkey"
+            columns: ["related_brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["brand_id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           additional_emails: string[] | null
@@ -266,7 +311,7 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           og_image_url: string | null
-          rating_avg: number
+          rating_avg: string
           slug: string | null
           special_tags: string | null
           subcategory: string | null
@@ -274,7 +319,7 @@ export type Database = {
           support_hours: Json | null
           toll_free_number: string | null
           top_products: string | null
-          total_reviews: number
+          total_reviews: string
           twitter_url: string | null
           updated_at: string
           website_url: string | null
@@ -308,7 +353,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           og_image_url?: string | null
-          rating_avg?: number
+          rating_avg: string
           slug?: string | null
           special_tags?: string | null
           subcategory?: string | null
@@ -316,7 +361,7 @@ export type Database = {
           support_hours?: Json | null
           toll_free_number?: string | null
           top_products?: string | null
-          total_reviews?: number
+          total_reviews: string
           twitter_url?: string | null
           updated_at?: string
           website_url?: string | null
@@ -350,7 +395,7 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           og_image_url?: string | null
-          rating_avg?: number
+          rating_avg?: string
           slug?: string | null
           special_tags?: string | null
           subcategory?: string | null
@@ -358,7 +403,7 @@ export type Database = {
           support_hours?: Json | null
           toll_free_number?: string | null
           top_products?: string | null
-          total_reviews?: number
+          total_reviews?: string
           twitter_url?: string | null
           updated_at?: string
           website_url?: string | null
@@ -372,6 +417,54 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      faqs: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          faq_id: string
+          is_active: boolean
+          keywords: string[] | null
+          meta_description: string | null
+          meta_title: string | null
+          question: string
+          subcategory: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          faq_id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_title?: string | null
+          question: string
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          faq_id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          meta_description?: string | null
+          meta_title?: string | null
+          question?: string
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       otp_logs: {
         Row: {
@@ -825,14 +918,21 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_categories: {
+        Row: {
+          category: string | null
+          faq_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_points_and_check_badges: {
         Args: {
-          p_user_id: string
           p_action_type: string
           p_points: number
           p_reference_id?: string
+          p_user_id: string
         }
         Returns: Json
       }

@@ -1,10 +1,11 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { ContactInfo } from "@/components/brand/contact-info";
 import { BrandReviews } from "@/components/brand/brand-reviews";
+import { BrandRelationships } from "@/components/brand/brand-relationships";
+import { BrandFAQs } from "@/components/brand/brand-faqs";
 import { EnhancedSEOHead } from "@/components/seo/enhanced-seo-head";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { SimilarBrands } from "@/components/similar-brands";
@@ -83,6 +84,43 @@ export default function BrandPage() {
         error = result.error;
       }
       
+      // If still not found, try by generated slug from brand name
+      if (!data && !error) {
+        console.log("Not found by ID, trying by brand name slug match");
+        const { data: allBrands } = await supabase
+          .from('brands')
+          .select(`
+            *,
+            meta_title,
+            meta_description,
+            slug,
+            keywords,
+            logo_alt,
+            og_image_url,
+            canonical_url,
+            additional_phone_numbers,
+            additional_emails,
+            support_hours,
+            escalation_phone,
+            escalation_email,
+            escalation_contact_name,
+            head_office_address
+          `);
+        
+        if (allBrands) {
+          // Find brand where generated slug matches
+          data = allBrands.find(brand => {
+            const generatedSlug = brand.brand_name
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return generatedSlug === brandId;
+          }) || null;
+        }
+      }
+      
       if (error) {
         console.error('Error fetching brand:', error);
         throw error;
@@ -142,9 +180,7 @@ export default function BrandPage() {
   useEffect(() => {
     if (brandData) {
       setBrand(brandData);
-      // Reset category selection when brand changes
       setSelectedCategory("all");
-      // Scroll to top when brand page loads
       window.scrollTo(0, 0);
     } else if (!isLoading && !brandData && brandId) {
       toast({
@@ -156,7 +192,6 @@ export default function BrandPage() {
     }
   }, [brandData, isLoading, brandId, navigate]);
 
-  // Filter similar brands based on search and category
   const filteredSimilarBrands = similarBrands.filter((b) => {
     const matchesSearch = b.brand_name
       .toLowerCase()
@@ -170,7 +205,6 @@ export default function BrandPage() {
       navigate(`/brand/${result.slug || result.id}`);
     } else if (result.type === 'category') {
       setSelectedCategory(result.category);
-      // Scroll to similar brands section
       setTimeout(() => {
         document.getElementById('similar-brands')?.scrollIntoView({ 
           behavior: 'smooth',
@@ -182,7 +216,6 @@ export default function BrandPage() {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    // Scroll to similar brands section
     setTimeout(() => {
       document.getElementById('similar-brands')?.scrollIntoView({ 
         behavior: 'smooth',
@@ -269,7 +302,7 @@ export default function BrandPage() {
                       ))}
                     </div>
                     <span className="text-lg font-medium text-gray-900">
-                      {brand.total_reviews > 0 ? brand.rating_avg.toFixed(1) : 'No reviews yet'}
+                      {Number(brand.total_reviews || 0) > 0 ? Number(brand.rating_avg || 0).toFixed(1) : 'No reviews yet'}
                     </span>
                     <span className="text-gray-600">
                       ({brand.total_reviews} {brand.total_reviews === 1 ? 'review' : 'reviews'})
@@ -278,7 +311,6 @@ export default function BrandPage() {
                 </div>
               </div>
               
-              {/* Write Review Button */}
               <Button 
                 onClick={() => navigate(`/write-review/${brand.brand_id}`)}
                 className="flex items-center space-x-2"
@@ -290,7 +322,6 @@ export default function BrandPage() {
 
             {/* Key Contact Info Above Fold */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              {/* Primary Phone */}
               {brand.toll_free_number && (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Phone className="w-6 h-6 text-green-600 mx-auto mb-2" />
@@ -304,7 +335,6 @@ export default function BrandPage() {
                 </div>
               )}
 
-              {/* Email */}
               {brand.support_email && (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Mail className="w-6 h-6 text-blue-600 mx-auto mb-2" />
@@ -318,7 +348,6 @@ export default function BrandPage() {
                 </div>
               )}
 
-              {/* Website */}
               {brand.website_url && (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Globe className="w-6 h-6 text-purple-600 mx-auto mb-2" />
@@ -334,7 +363,6 @@ export default function BrandPage() {
                 </div>
               )}
 
-              {/* Complaint Page */}
               {brand.complaint_page_url && (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <AlertTriangle className="w-6 h-6 text-orange-600 mx-auto mb-2" />
@@ -409,6 +437,16 @@ export default function BrandPage() {
           {/* Additional Contact Information */}
           <div className="mb-8">
             <ContactInfo brand={brand} />
+          </div>
+
+          {/* Brand Relationships Section */}
+          <div className="mb-8">
+            <BrandRelationships brand={brand} />
+          </div>
+          
+          {/* FAQ Section */}
+          <div className="mb-8">
+            <BrandFAQs brand={brand} />
           </div>
           
           {/* Enhanced Similar Brands Section with Search */}

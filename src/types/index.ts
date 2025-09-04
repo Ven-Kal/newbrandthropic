@@ -1,3 +1,4 @@
+
 // User types
 export type UserRole = 'consumer' | 'admin';
 
@@ -21,6 +22,16 @@ export interface EscalationLevel {
   phone?: string;
   email?: string;
   note?: string;
+}
+
+export interface BrandRelationship {
+  id: string;
+  brand_id: string;
+  related_brand_id: string;
+  relationship_type: 'subsidiary' | 'parent_company' | 'sister_concern' | 'affiliate' | 'partner' | 'competitor' | 'other';
+  description?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Brand {
@@ -78,6 +89,8 @@ export interface Brand {
   };
   // New escalation levels
   escalation_levels?: EscalationLevel[];
+  // Brand relationships
+  relationships?: BrandRelationship[];
 }
 
 // Review types

@@ -281,7 +281,7 @@ export default function AdminBrandsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="capitalize">{brand.category}</TableCell>
-                    <TableCell>{brand.rating_avg.toFixed(1)}</TableCell>
+                    <TableCell>{Number(brand.rating_avg || 0).toFixed(1)}</TableCell>
                     <TableCell>{brand.total_reviews}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
