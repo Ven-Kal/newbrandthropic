@@ -11,25 +11,19 @@ interface BrandCardProps {
 }
 
 export function BrandCard({ brand }: BrandCardProps) {
-  // Generate slug from brand name if slug is missing
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .trim();
-  };
-
-  // Use slug if available, otherwise generate one from brand name, fallback to brand_id
-  const brandUrl = brand.slug 
-    ? `/brand/${brand.slug}` 
-    : brand.brand_name 
-      ? `/brand/${generateSlug(brand.brand_name)}`
-      : `/brand/${brand.brand_id}`;
+  // Use slug from database only, fallback to brand_id if no slug
+  const brandSlug = brand.slug || brand.brand_id;
+  const brandUrl = `/brand/${brandSlug}`;
   
   return (
-    <Link to={brandUrl} onClick={() => window.scrollTo(0, 0)}>
+    <Link 
+      to={brandUrl} 
+      className="block h-full" 
+      onClick={() => {
+        console.log("Navigating to:", brandUrl);
+        window.scrollTo(0, 0);
+      }}
+    >
       <Card className="group hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer h-full flex flex-col">
         <CardContent className="p-6 flex-grow flex flex-col">
           {/* Logo */}
@@ -50,14 +44,14 @@ export function BrandCard({ brand }: BrandCardProps) {
           </h3>
 
           {/* Rating - Only show if there are actual reviews */}
-          {brand.total_reviews > 0 ? (
+          {Number(brand.total_reviews || 0) > 0 ? (
             <div className="flex items-center justify-center mb-4">
-              <Rating value={brand.rating_avg} size="sm" className="mr-2" />
+              <Rating value={Number(brand.rating_avg || 0)} size="sm" className="mr-2" />
               <span className="text-sm font-medium text-gray-700">
-                {brand.rating_avg.toFixed(1)}
+                {Number(brand.rating_avg || 0).toFixed(1)}
               </span>
               <span className="text-sm text-gray-500 ml-1">
-                ({brand.total_reviews} {brand.total_reviews === 1 ? 'review' : 'reviews'})
+                ({brand.total_reviews} {Number(brand.total_reviews || 0) === 1 ? 'review' : 'reviews'})
               </span>
             </div>
           ) : (

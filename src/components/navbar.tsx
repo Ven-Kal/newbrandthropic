@@ -71,14 +71,19 @@ export function Navbar() {
                   console.log('Logo failed to load from /logo-brand.png, trying fallback');
                   target.src = '/logo-favi.png';
                   target.onerror = () => {
-                    console.log('Fallback logo also failed, hiding image');
+                    console.log('Fallback logo also failed, showing text fallback');
                     target.style.display = 'none';
+                    // Show text fallback if image fails
+                    const parent = target.parentElement;
+                    if (parent && !parent.querySelector('.text-fallback')) {
+                      const textFallback = document.createElement('span');
+                      textFallback.className = 'text-lg sm:text-2xl font-bold text-primary text-fallback';
+                      textFallback.textContent = 'Brandthropic';
+                      parent.appendChild(textFallback);
+                    }
                   };
                 }}
               />
-              <span className="text-lg sm:text-2xl font-bold text-primary truncate">
-                Brandthropic
-              </span>
             </Link>
           </div>
 
