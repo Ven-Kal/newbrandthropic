@@ -11,7 +11,8 @@ import {
   Search,
   Megaphone,
   BarChart3,
-  BookOpen
+  BookOpen,
+  HelpCircle
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -39,6 +40,7 @@ export default function AdminLayout() {
     { path: '/admin/users', icon: Users, label: 'Users' },
     { path: '/admin/blogs', icon: FileText, label: 'Blogs' },
     { path: '/admin/announcements', icon: Megaphone, label: 'Announcements' },
+    { path: '/admin/faq', icon: HelpCircle, label: 'FAQ Management' },
     { path: '/admin/seo', icon: Search, label: 'SEO' },
     { path: '/admin/guide', icon: BookOpen, label: 'Platform Guide' },
   ];

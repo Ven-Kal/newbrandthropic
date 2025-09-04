@@ -11,9 +11,10 @@ interface ImageUploaderProps {
   onImageUploaded: (url: string) => void;
   currentImage?: string;
   label?: string;
+  bucketName?: string;
 }
 
-export function ImageUploader({ onImageUploaded, currentImage, label = "Upload Image" }: ImageUploaderProps) {
+export function ImageUploader({ onImageUploaded, currentImage, label = "Upload Image", bucketName = "Brand Assets" }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -48,7 +49,7 @@ export function ImageUploader({ onImageUploaded, currentImage, label = "Upload I
       console.log('Uploading file:', fileName);
 
       const { error: uploadError } = await supabase.storage
-        .from('Brand Assets')
+        .from('blog-images')
         .upload(filePath, file);
 
       if (uploadError) {
@@ -57,7 +58,7 @@ export function ImageUploader({ onImageUploaded, currentImage, label = "Upload I
       }
 
       const { data } = supabase.storage
-        .from('Brand Assets')
+        .from('blog-images')
         .getPublicUrl(filePath);
 
       console.log('File uploaded successfully, URL:', data.publicUrl);

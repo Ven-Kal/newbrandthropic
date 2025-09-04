@@ -2,6 +2,7 @@
 import { ReactNode } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ScrollToFooter } from "@/components/ui/scroll-to-footer";
 import { VisitorTracker } from "@/components/analytics/visitor-tracker";
 import { WhatsAppChat } from "@/components/whatsapp/whatsapp-chat";
 
@@ -27,6 +28,7 @@ export function PageLayout({
       </main>
       {showFooter && <Footer />}
       {showWhatsApp && <WhatsAppChat />}
+      <ScrollToFooter />
     </div>
   );
 }
